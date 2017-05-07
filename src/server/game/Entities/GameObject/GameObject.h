@@ -89,7 +89,7 @@ class TC_GAME_API GameObject : public WorldObject, public GridObject<GameObject>
         void RemoveFromWorld() override;
         void CleanupsBeforeDelete(bool finalCleanup = true) override;
 
-        bool Create(ObjectGuid::LowType guidlow, uint32 name_id, Map* map, uint32 phaseMask, Position const& pos, QuaternionData const& rotation, uint32 animprogress, GOState go_state, uint32 artKit = 0);
+        bool Create(ObjectGuid::LowType guidlow, uint32 name_id, Map* map, uint32 phaseMask, Position const& pos, QuaternionData const& rotation, uint32 animprogress, GOState go_state, uint32 artKit = 0, bool dynamic = false, ObjectGuid::LowType spawnid = 0);
         void Update(uint32 p_time) override;
         GameObjectTemplate const* GetGOInfo() const { return m_goInfo; }
         GameObjectTemplateAddon const* GetTemplateAddon() const { return m_goTemplateAddon; }
@@ -212,7 +212,8 @@ class TC_GAME_API GameObject : public WorldObject, public GridObject<GameObject>
         uint32 GetUseCount() const { return m_usetimes; }
         uint32 GetUniqueUseCount() const { return m_unique_users.size(); }
 
-        void SaveRespawnTime() override;
+        void SaveRespawnTime() override { SaveRespawnTime(0); }
+        void SaveRespawnTime(uint32 forceDelay, bool savetodb = true);
 
         Loot        loot;
 
@@ -263,6 +264,10 @@ class TC_GAME_API GameObject : public WorldObject, public GridObject<GameObject>
         }
 
         void EventInform(uint32 eventId, WorldObject* invoker = nullptr);
+
+        // There's many places not ready for dynamic spawns. This allows them to live on for now.
+        void SetRespawnCompatibilityMode(bool mode = true) { m_respawnCompatibilityMode = mode; }
+        bool GetRespawnCompatibilityMode() {return m_respawnCompatibilityMode; }
 
         uint32 GetScriptId() const;
         GameObjectAI* AI() const { return m_AI; }
@@ -344,5 +349,6 @@ class TC_GAME_API GameObject : public WorldObject, public GridObject<GameObject>
             return IsInRange(obj->GetPositionX(), obj->GetPositionY(), obj->GetPositionZ(), dist2compare);
         }
         GameObjectAI* m_AI;
+        bool m_respawnCompatibilityMode;
 };
 #endif
