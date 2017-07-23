@@ -691,6 +691,11 @@ void Map::VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::Obj
     if (!obj->IsPositionValid())
         return;
 
+    // Handle possible respawns (Zone/Area scope)
+    uint32 zoneId, areaId;
+    obj->GetZoneAndAreaId(zoneId, areaId);
+    RespawnCellAreaZone(RESPAWN_INVALID_CELLAREAZONE, zoneId, areaId);
+
     // Update mobs/objects in ALL visible cells around object!
     CellArea area = Cell::CalculateCellArea(obj->GetPositionX(), obj->GetPositionY(), obj->GetGridActivationRange());
 
@@ -711,10 +716,8 @@ void Map::VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::Obj
             Visit(cell, gridVisitor);
             Visit(cell, worldVisitor);
 
-            uint32 zoneId, areaId;
-            obj->GetZoneAndAreaId(zoneId, areaId);
-            // Handle possible respawns
-            RespawnCellAreaZone(cell.GetCellCoord().GetId(), zoneId, areaId);
+            // Handle possible respawns (Cell scope)
+            RespawnCellAreaZone(cell.GetCellCoord().GetId(), RESPAWN_INVALID_CELLAREAZONE, RESPAWN_INVALID_CELLAREAZONE);
         }
     }
 }
@@ -3351,13 +3354,16 @@ void Map::RespawnCellAreaZone(uint32 cellId, uint32 zoneId, uint32 areaId)
     switch (sWorld->getIntConfig(CONFIG_RESPAWN_ACTIVITYSCOPECREATURE))
     {
         case RESPAWNSCOPE_CELL:
-            RespawnCellAreaZoneCreature(cellId);
+            if (cellId != RESPAWN_INVALID_CELLAREAZONE)
+                RespawnCellAreaZoneCreature(cellId);
             break;
         case RESPAWNSCOPE_AREA:
-            RespawnCellAreaZoneCreature(areaId);
+            if (areaId != RESPAWN_INVALID_CELLAREAZONE)
+                RespawnCellAreaZoneCreature(areaId);
             break;
         case RESPAWNSCOPE_ZONE:
-            RespawnCellAreaZoneCreature(zoneId);
+            if (zoneId != RESPAWN_INVALID_CELLAREAZONE)
+                RespawnCellAreaZoneCreature(zoneId);
             break;
         default:
             ASSERT("INVALID RESPAWN SCOPE");
@@ -3366,13 +3372,16 @@ void Map::RespawnCellAreaZone(uint32 cellId, uint32 zoneId, uint32 areaId)
     switch (sWorld->getIntConfig(CONFIG_RESPAWN_ACTIVITYSCOPEGAMEOBJECT))
     {
         case RESPAWNSCOPE_CELL:
-            RespawnCellAreaZoneGameObject(cellId);
+            if (cellId != RESPAWN_INVALID_CELLAREAZONE)
+                RespawnCellAreaZoneGameObject(cellId);
             break;
         case RESPAWNSCOPE_AREA:
-            RespawnCellAreaZoneGameObject(areaId);
+            if (areaId != RESPAWN_INVALID_CELLAREAZONE)
+                RespawnCellAreaZoneGameObject(areaId);
             break;
         case RESPAWNSCOPE_ZONE:
-            RespawnCellAreaZoneGameObject(zoneId);
+            if (zoneId != RESPAWN_INVALID_CELLAREAZONE)
+                RespawnCellAreaZoneGameObject(zoneId);
             break;
         default:
             ASSERT("INVALID RESPAWN SCOPE");

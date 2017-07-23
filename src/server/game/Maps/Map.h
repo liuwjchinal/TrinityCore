@@ -121,6 +121,8 @@ struct map_heightHeader
 #define MAP_LIQUID_NO_TYPE    0x0001
 #define MAP_LIQUID_NO_HEIGHT  0x0002
 
+#define RESPAWN_INVALID_CELLAREAZONE 0xffffffff
+
 struct map_liquidHeader
 {
     uint32 fourcc;
