@@ -3563,7 +3563,7 @@ uint32 Map::GetPlayersInRangeOfPosition(Position const* pos, uint32 phaseMask, f
 {
     Trinity::AnyPlayerInPositionRangeCheck checker(pos, range);
     Trinity::PlayerListSearcher<Trinity::AnyPlayerInPositionRangeCheck> searcher(phaseMask, playerList, checker);
-    VisitWorld(pos->GetPositionX(), pos->GetPositionY(), range, searcher);
+    Cell::VisitWorldObjects(pos->GetPositionX(), pos->GetPositionY(), this, searcher, range);
     return playerList.size();
 }
 

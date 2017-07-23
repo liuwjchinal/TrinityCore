@@ -38,6 +38,7 @@
 class Item;
 class Unit;
 class Vehicle;
+class Map;
 struct AccessRequirement;
 struct DeclinedName;
 struct DungeonEncounterEntry;

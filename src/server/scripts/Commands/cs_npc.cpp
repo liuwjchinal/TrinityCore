@@ -229,7 +229,7 @@ public:
             { "yell",         rbac::RBAC_PERM_COMMAND_NPC_YELL,         false, &HandleNpcYellCommand,              ""       },
             { "tame",         rbac::RBAC_PERM_COMMAND_NPC_TAME,         false, &HandleNpcTameCommand,              ""       },
             { "spawngroup",   rbac::RBAC_PERM_COMMAND_NPC_SPAWNGROUP,   false, &HandleNpcSpawnGroup,               ""       },
-            { "despawngroup", rbac::RBAC_PERM_COMMAND_NPC_DESPAWNGROUP, false, &HandleNpcDepawnGroup,              ""       },
+            { "despawngroup", rbac::RBAC_PERM_COMMAND_NPC_DESPAWNGROUP, false, &HandleNpcDespawnGroup,             ""       },
             { "add",          rbac::RBAC_PERM_COMMAND_NPC_ADD,          false, nullptr,              "", npcAddCommandTable },
             { "delete",       rbac::RBAC_PERM_COMMAND_NPC_DELETE,       false, nullptr,           "", npcDeleteCommandTable },
             { "follow",       rbac::RBAC_PERM_COMMAND_NPC_FOLLOW,       false, nullptr,           "", npcFollowCommandTable },

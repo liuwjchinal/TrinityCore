@@ -27,6 +27,7 @@ EndScriptData */
 #include "Chat.h"
 #include "DatabaseEnv.h"
 #include "DBCStores.h"
+#include "GameObject.h"
 #include "Language.h"
 #include "MapManager.h"
 #include "ObjectAccessor.h"
