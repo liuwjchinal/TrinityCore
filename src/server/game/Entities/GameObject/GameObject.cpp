@@ -877,7 +877,7 @@ void GameObject::SaveToDB()
 {
     // this should only be used when the gameobject has already been loaded
     // preferably after adding to map, because mapid may not be valid otherwise
-    GameObjectData const* data = sObjectMgr->GetGOData(m_spawnId);
+    GameObjectData const* data = sObjectMgr->GetGameObjectData(m_spawnId);
     if (!data)
     {
         TC_LOG_ERROR("misc", "GameObject::SaveToDB failed, cannot get gameobject data!");
@@ -897,20 +897,16 @@ void GameObject::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
         m_spawnId = sObjectMgr->GenerateGameObjectSpawnId();
 
     // update in loaded data (changing data only in this place)
-    GameObjectData& data = sObjectMgr->NewGOData(m_spawnId);
+    GameObjectData& data = sObjectMgr->NewOrExistGameObjectData(m_spawnId);
 
     // data->guid = guid must not be updated at save
     data.id = GetEntry();
-    data.mapid = mapid;
+    data.WorldRelocate(this);
     data.phaseMask = phaseMask;
-    data.posX = GetPositionX();
-    data.posY = GetPositionY();
-    data.posZ = GetPositionZ();
-    data.orientation = GetOrientation();
     data.rotation = m_worldRotation;
     data.spawntimesecs = m_spawnedByDefault ? m_respawnDelayTime : -(int32)m_respawnDelayTime;
     data.animprogress = GetGoAnimProgress();
-    data.go_state = GetGoState();
+    data.goState = GetGoState();
     data.spawnMask = spawnMask;
     data.artKit = GetGoArtKit();
 
@@ -947,7 +943,7 @@ void GameObject::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
 
 bool GameObject::LoadGameObjectFromDB(ObjectGuid::LowType spawnId, Map* map, bool addToMap)
 {
-    GameObjectData const* data = sObjectMgr->GetGOData(spawnId);
+    GameObjectData const* data = sObjectMgr->GetGameObjectData(spawnId);
 
     if (!data)
     {
@@ -958,15 +954,14 @@ bool GameObject::LoadGameObjectFromDB(ObjectGuid::LowType spawnId, Map* map, boo
     uint32 entry = data->id;
     //uint32 map_id = data->mapid;                          // already used before call
     uint32 phaseMask = data->phaseMask;
-    Position pos(data->posX, data->posY, data->posZ, data->orientation);
 
     uint32 animprogress = data->animprogress;
-    GOState go_state = data->go_state;
+    GOState go_state = data->goState;
     uint32 artKit = data->artKit;
 
     m_spawnId = spawnId;
-    m_respawnCompatibilityMode = data->groupdata ? (data->groupdata->flags & GAMEOBJECTGROUP_FLAG_COMPATIBILITY_MODE) : true;
-    if (!Create(map->GenerateLowGuid<HighGuid::GameObject>(), entry, map, phaseMask, pos, data->rotation, animprogress, go_state, artKit, !m_respawnCompatibilityMode))
+    m_respawnCompatibilityMode = data->spawnGroupData ? (data->spawnGroupData->flags & SPAWNGROUP_FLAG_COMPATIBILITY_MODE) : true;
+    if (!Create(map->GenerateLowGuid<HighGuid::GameObject>(), entry, map, phaseMask, *data, data->rotation, animprogress, go_state, artKit, !m_respawnCompatibilityMode))
         return false;
 
     if (data->spawntimesecs >= 0)
@@ -1010,7 +1005,7 @@ bool GameObject::LoadGameObjectFromDB(ObjectGuid::LowType spawnId, Map* map, boo
 void GameObject::DeleteFromDB()
 {
     GetMap()->RemoveGORespawnTime(m_spawnId);
-    sObjectMgr->DeleteGOData(m_spawnId);
+    sObjectMgr->DeleteGameObjectData(m_spawnId);
 
     PreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_DEL_GAMEOBJECT);
 
@@ -1270,7 +1265,7 @@ void GameObject::UseDoorOrButton(uint32 time_to_restore, bool alternative /* = f
 void GameObject::SetGoArtKit(uint8 kit)
 {
     SetByteValue(GAMEOBJECT_BYTES_1, 2, kit);
-    GameObjectData* data = const_cast<GameObjectData*>(sObjectMgr->GetGOData(m_spawnId));
+    GameObjectData* data = const_cast<GameObjectData*>(sObjectMgr->GetGameObjectData(m_spawnId));
     if (data)
         data->artKit = kit;
 }
@@ -1281,10 +1276,10 @@ void GameObject::SetGoArtKit(uint8 artkit, GameObject* go, ObjectGuid::LowType l
     if (go)
     {
         go->SetGoArtKit(artkit);
-        data = go->GetGOData();
+        data = go->GetGameObjectData();
     }
     else if (lowguid)
-        data = sObjectMgr->GetGOData(lowguid);
+        data = sObjectMgr->GetGameObjectData(lowguid);
 
     if (data)
         const_cast<GameObjectData*>(data)->artKit = artkit;
@@ -2014,8 +2009,8 @@ void GameObject::EventInform(uint32 eventId, WorldObject* invoker /*= nullptr*/)
 
 uint32 GameObject::GetScriptId() const
 {
-    if (GameObjectData const* gameObjectData = GetGOData())
-        if (uint32 scriptId = gameObjectData->ScriptId)
+    if (GameObjectData const* gameObjectData = GetGameObjectData())
+        if (uint32 scriptId = gameObjectData->scriptId)
             return scriptId;
 
     return GetGOInfo()->ScriptId;
@@ -2455,22 +2450,20 @@ void GameObject::GetRespawnPosition(float &x, float &y, float &z, float* ori /* 
 {
     if (m_spawnId)
     {
-        if (GameObjectData const* data = sObjectMgr->GetGOData(GetSpawnId()))
+        if (GameObjectData const* data = sObjectMgr->GetGameObjectData(GetSpawnId()))
         {
-            x = data->posX;
-            y = data->posY;
-            z = data->posZ;
             if (ori)
-                *ori = data->orientation;
+                data->GetPosition(x, y, z, *ori);
+            else
+                data->GetPosition(x, y, z);
             return;
         }
     }
 
-    x = GetPositionX();
-    y = GetPositionY();
-    z = GetPositionZ();
     if (ori)
-        *ori = GetOrientation();
+        GetPosition(x, y, z, *ori);
+    else
+        GetPosition(x, y, z);
 }
 
 float GameObject::GetInteractionDistance() const

@@ -222,7 +222,7 @@ void PoolGroup<Creature>::Despawn1Object(ObjectGuid::LowType guid)
     {
         sObjectMgr->RemoveCreatureFromGrid(guid, data);
 
-        Map* map = sMapMgr->CreateBaseMap(data->mapid);
+        Map* map = sMapMgr->CreateBaseMap(data->GetMapId());
         if (!map->Instanceable())
         {
             auto creatureBounds = map->GetCreatureBySpawnIdStore().equal_range(guid);
@@ -243,11 +243,11 @@ void PoolGroup<Creature>::Despawn1Object(ObjectGuid::LowType guid)
 template<>
 void PoolGroup<GameObject>::Despawn1Object(ObjectGuid::LowType guid)
 {
-    if (GameObjectData const* data = sObjectMgr->GetGOData(guid))
+    if (GameObjectData const* data = sObjectMgr->GetGameObjectData(guid))
     {
         sObjectMgr->RemoveGameobjectFromGrid(guid, data);
 
-        Map* map = sMapMgr->CreateBaseMap(data->mapid);
+        Map* map = sMapMgr->CreateBaseMap(data->GetMapId());
         if (!map->Instanceable())
         {
             auto gameobjectBounds = map->GetGameObjectBySpawnIdStore().equal_range(guid);
@@ -386,9 +386,9 @@ void PoolGroup<Creature>::Spawn1Object(PoolObject* obj)
         sObjectMgr->AddCreatureToGrid(obj->guid, data);
 
         // Spawn if necessary (loaded grids only)
-        Map* map = sMapMgr->CreateBaseMap(data->mapid);
+        Map* map = sMapMgr->CreateBaseMap(data->GetMapId());
         // We use spawn coords to spawn
-        if (!map->Instanceable() && map->IsGridLoaded(data->posX, data->posY))
+        if (!map->Instanceable() && map->IsGridLoaded(*data))
         {
             Creature* creature = new Creature();
             //TC_LOG_DEBUG("pool", "Spawning creature %u", guid);
@@ -405,14 +405,14 @@ void PoolGroup<Creature>::Spawn1Object(PoolObject* obj)
 template <>
 void PoolGroup<GameObject>::Spawn1Object(PoolObject* obj)
 {
-    if (GameObjectData const* data = sObjectMgr->GetGOData(obj->guid))
+    if (GameObjectData const* data = sObjectMgr->GetGameObjectData(obj->guid))
     {
         sObjectMgr->AddGameobjectToGrid(obj->guid, data);
         // Spawn if necessary (loaded grids only)
         // this base map checked as non-instanced and then only existed
-        Map* map = sMapMgr->CreateBaseMap(data->mapid);
+        Map* map = sMapMgr->CreateBaseMap(data->GetMapId());
         // We use current coords to unspawn, not spawn coords since creature can have changed grid
-        if (!map->Instanceable() && map->IsGridLoaded(data->posX, data->posY))
+        if (!map->Instanceable() && map->IsGridLoaded(*data))
         {
             GameObject* pGameobject = new GameObject;
             //TC_LOG_DEBUG("pool", "Spawning gameobject %u", guid);
@@ -695,7 +695,7 @@ void PoolMgr::LoadFromDB()
                 uint32 pool_id = fields[1].GetUInt32();
                 float chance   = fields[2].GetFloat();
 
-                GameObjectData const* data = sObjectMgr->GetGOData(guid);
+                GameObjectData const* data = sObjectMgr->GetGameObjectData(guid);
                 if (!data)
                 {
                     TC_LOG_ERROR("sql.sql", "`pool_gameobject` has a non existing gameobject spawn (GUID: %u) defined for pool id (%u), skipped.", guid, pool_id);

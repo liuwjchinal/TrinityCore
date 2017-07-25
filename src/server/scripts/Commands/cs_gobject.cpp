@@ -178,7 +178,7 @@ public:
         }
 
         /// @todo is it really necessary to add both the real and DB table guid here ?
-        sObjectMgr->AddGameobjectToGrid(guidLow, sObjectMgr->GetGOData(guidLow));
+        sObjectMgr->AddGameobjectToGrid(guidLow, sObjectMgr->GetGameObjectData(guidLow));
 
         handler->PSendSysMessage(LANG_GAMEOBJECT_ADD, objectId, objectInfo->name.c_str(), guidLow, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ());
         return true;
@@ -692,7 +692,7 @@ public:
             if (!cValue)
                 return false;
             ObjectGuid::LowType guidLow = atoul(cValue);
-            GameObjectData const* data = sObjectMgr->GetGOData(guidLow);
+            GameObjectData const* data = sObjectMgr->GetGameObjectData(guidLow);
             if (!data)
                 return false;
             entry = data->id;
@@ -740,9 +740,9 @@ public:
         handler->PSendSysMessage(LANG_GOINFO_DISPLAYID, displayId);
         if (WorldObject* object = handler->getSelectedObject())
         {
-            if (object->ToGameObject() && object->ToGameObject()->GetGOData() && object->ToGameObject()->GetGOData()->groupdata)
+            if (object->ToGameObject() && object->ToGameObject()->GetGameObjectData() && object->ToGameObject()->GetGameObjectData()->spawnGroupData)
             {
-                GameObjectGroupTemplateData* groupdata = object->ToGameObject()->GetGOData()->groupdata;
+                SpawnGroupTemplateData const* groupdata = object->ToGameObject()->GetGameObjectData()->spawnGroupData;
                 handler->PSendSysMessage(LANG_SPAWNINFO_GROUP_ID, groupdata->groupId, groupdata->flags, groupdata->isActive);
             }
             if (object->ToGameObject())

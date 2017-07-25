@@ -21,15 +21,16 @@
 
 #include "Define.h"
 
-#include "GridDefines.h"
 #include "Cell.h"
-#include "Timer.h"
-#include "SharedDefines.h"
+#include "DynamicTree.h"
+#include "GridDefines.h"
 #include "GridRefManager.h"
 #include "MapRefManager.h"
-#include "DynamicTree.h"
 #include "ObjectGuid.h"
 #include "Optional.h"
+#include "SharedDefines.h"
+#include "SpawnData.h"
+#include "Timer.h"
 #include "Transaction.h"
 
 #include <bitset>
@@ -250,14 +251,9 @@ enum LevelRequirementVsMode
     LEVELREQUIREMENT_HEROIC = 70
 };
 
-enum RespawnMode
-{
-    RESPAWNMODE_CREATURE = 0,
-    RESPAWNMODE_GAMEOBJECT = 1
-};
-
 struct RespawnInfo
 {
+    SpawnObjectType type;
     ObjectGuid::LowType spawnId;
     uint32 entry;
     time_t respawnTime;
@@ -343,10 +339,8 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
             return !getNGrid(p.x_coord, p.y_coord) || getNGrid(p.x_coord, p.y_coord)->GetGridState() == GRID_STATE_REMOVAL;
         }
 
-        bool IsGridLoaded(float x, float y) const
-        {
-            return IsGridLoaded(Trinity::ComputeGridCoord(x, y));
-        }
+        bool IsGridLoaded(float x, float y) const { return IsGridLoaded(Trinity::ComputeGridCoord(x, y)); }
+        bool IsGridLoaded(Position const& pos) const { return IsGridLoaded(pos.GetPositionX(), pos.GetPositionY()); }
 
         bool GetUnloadLock(GridCoord const& p) const { return getNGrid(p.x_coord, p.y_coord)->getUnloadLock(); }
         void SetUnloadLock(GridCoord const& p, bool on) { getNGrid(p.x_coord, p.y_coord)->setUnloadExplicitLock(on); }
@@ -563,12 +557,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void SaveCreatureRespawnTimeDB(ObjectGuid::LowType spawnId, time_t respawnTime, SQLTransaction respawnTrans = nullptr);
         void SaveGORespawnTime(ObjectGuid::LowType spawnId, uint32 entry, time_t respawnTime, uint32 zoneId = 0, uint32 gridId = 0, bool writeDB = true, bool replace = false, SQLTransaction respawnTrans = nullptr);
         void SaveGORespawnTimeDB(ObjectGuid::LowType spawnId, time_t respawnTime, SQLTransaction respawnTrans = nullptr);
-        enum RespawnObjectType
-        {
-            OBJECT_TYPE_CREATURE        = 0,
-            OBJECT_TYPE_GAMEOBJECT      = 1
-        };
-        bool GetRespawnData(RespawnVector& results, RespawnObjectType type, uint32 zoneId) const;
+        bool GetRespawnData(RespawnVector& results, SpawnObjectType type, uint32 zoneId) const;
         void LoadRespawnTimes();
         void DeleteRespawnTimes();
 
@@ -765,7 +754,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 
         void ProcessRespawns(uint32 zoneId);
         void ProcessDynamicModeRespawnScaling(uint32 zoneId, uint32 mode);
-        static void DynamicModeScaleRespawnTimes(RespawnVector& respawnData, uint32 numPlayers, RespawnMode mode);
+        static void DynamicModeScaleRespawnTimes(RespawnVector& respawnData, uint32 numPlayers, SpawnObjectType type);
 
         void AddRespawnInfo(RespawnInfoMultiMap& gridList, RespawnInfoMultiMap& zoneList, RespawnInfoMap& spawnList, RespawnInfo& info, bool replace = false);
         bool GetRespawnInfo(RespawnInfoMultiMap const& gridList, RespawnInfoMultiMap const& zoneList, RespawnInfoMap const& spawnList, RespawnVector& respawnData, ObjectGuid::LowType spawnId, uint32 gridId = 0, uint32 zoneId = 0, bool onlyDue = true) const;

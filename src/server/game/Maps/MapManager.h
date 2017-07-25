@@ -44,16 +44,19 @@ class TC_GAME_API MapManager
             Map const* m = const_cast<MapManager*>(this)->CreateBaseMap(mapid);
             return m->GetAreaId(x, y, z);
         }
+        uint32 GetAreaId(uint32 mapid, Position const& pos) const { return GetAreaId(mapid, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ()); }
         uint32 GetZoneId(uint32 mapid, float x, float y, float z) const
         {
             Map const* m = const_cast<MapManager*>(this)->CreateBaseMap(mapid);
             return m->GetZoneId(x, y, z);
         }
-        void GetZoneAndAreaId(uint32& zoneid, uint32& areaid, uint32 mapid, float x, float y, float z)
+        uint32 GetZoneId(uint32 mapid, Position const& pos) const { return GetZoneId(mapid, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ()); }
+        void GetZoneAndAreaId(uint32& zoneid, uint32& areaid, uint32 mapid, float x, float y, float z) const
         {
             Map const* m = const_cast<MapManager*>(this)->CreateBaseMap(mapid);
             m->GetZoneAndAreaId(zoneid, areaid, x, y, z);
         }
+        void GetZoneAndAreaId(uint32& zoneid, uint32& areaid, uint32 mapid, Position const& pos) const { GetZoneAndAreaId(zoneid, areaid, mapid, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ()); }
 
         void Initialize(void);
         void Update(uint32);

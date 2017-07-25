@@ -251,6 +251,12 @@ class WorldLocation : public Position
             Relocate(loc);
         }
 
+        void WorldRelocate(WorldLocation const* loc)
+        {
+            m_mapId = loc->GetMapId();
+            Relocate(loc);
+        }
+
         void WorldRelocate(uint32 _mapId = MAPID_INVALID, float x = 0.f, float y = 0.f, float z = 0.f, float o = 0.f)
         {
             m_mapId = _mapId;

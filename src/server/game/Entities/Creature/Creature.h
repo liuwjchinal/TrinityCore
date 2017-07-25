@@ -72,7 +72,7 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
 
         void DisappearAndDie();
 
-        bool Create(ObjectGuid::LowType guidlow, Map* map, uint32 phaseMask, uint32 entry, float x, float y, float z, float ang, CreatureData const* data = nullptr, uint32 vehId = 0, bool dynamic = false);
+        bool Create(ObjectGuid::LowType guidlow, Map* map, uint32 phaseMask, uint32 entry, Position const& pos, CreatureData const* data = nullptr, uint32 vehId = 0, bool dynamic = false);
         bool LoadCreaturesAddon();
         void SelectLevel();
         void UpdateLevelDependantStats();
@@ -83,7 +83,7 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
 
         void Update(uint32 time) override;                         // overwrited Unit::Update
         void GetRespawnPosition(float &x, float &y, float &z, float* ori = nullptr, float* dist = nullptr) const;
-        bool IsSpawnedOnTransport() const { return m_creatureData && m_creatureData->mapid != GetMapId(); }
+        bool IsSpawnedOnTransport() const { return m_creatureData && m_creatureData->GetMapId() != GetMapId(); }
 
         void SetCorpseDelay(uint32 delay) { m_corpseDelay = delay; }
         uint32 GetCorpseDelay() const { return m_corpseDelay; }

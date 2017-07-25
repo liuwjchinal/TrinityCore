@@ -289,16 +289,16 @@ void npc_escortAI::UpdateAI(uint32 diff)
 
                 if (CreatureData const* cdata = me->GetCreatureData())
                 {
-                    if (CreatureGroupTemplateData const* groupData = cdata->groupdata)
+                    if (SpawnGroupTemplateData const* groupData = cdata->spawnGroupData)
                         groupFlags = groupData->flags;
                 }
 
-                if (m_bCanInstantRespawn && !(sWorld->getBoolConfig(CONFIG_RESPAWN_DYNAMIC_ESCORTNPC) && (groupFlags & CREATUREGROUP_FLAG_ESCORTQUESTNPC)))
+                if (m_bCanInstantRespawn && !(sWorld->getBoolConfig(CONFIG_RESPAWN_DYNAMIC_ESCORTNPC) && (groupFlags & SPAWNGROUP_FLAG_ESCORTQUESTNPC)))
                 {
                     me->setDeathState(JUST_DIED);
                     me->Respawn();
                 }
-                else if (m_bCanInstantRespawn && (sWorld->getBoolConfig(CONFIG_RESPAWN_DYNAMIC_ESCORTNPC) && (groupFlags & CREATUREGROUP_FLAG_ESCORTQUESTNPC)))
+                else if (m_bCanInstantRespawn && (sWorld->getBoolConfig(CONFIG_RESPAWN_DYNAMIC_ESCORTNPC) && (groupFlags & SPAWNGROUP_FLAG_ESCORTQUESTNPC)))
                     me->GetMap()->RemoveCreatureRespawnTime(me->GetSpawnId(), 0, 0, true);
                 else
                     me->DespawnOrUnsummon();
@@ -444,9 +444,9 @@ void npc_escortAI::Start(bool isActiveAttacker /* = true*/, bool run /* = false 
     {
         if (CreatureData const* cdata = me->GetCreatureData())
         {
-            if (CreatureGroupTemplateData const* groupdata = cdata->groupdata)
+            if (SpawnGroupTemplateData const* groupdata = cdata->spawnGroupData)
             {
-                if (sWorld->getBoolConfig(CONFIG_RESPAWN_DYNAMIC_ESCORTNPC) && (groupdata->flags & CREATUREGROUP_FLAG_ESCORTQUESTNPC) && !map->GetCreatureRespawnTime(me->GetSpawnId()))
+                if (sWorld->getBoolConfig(CONFIG_RESPAWN_DYNAMIC_ESCORTNPC) && (groupdata->flags & SPAWNGROUP_FLAG_ESCORTQUESTNPC) && !map->GetCreatureRespawnTime(me->GetSpawnId()))
                 {
                     me->SetRespawnTime(me->GetRespawnDelay());
                     me->SaveRespawnTime();

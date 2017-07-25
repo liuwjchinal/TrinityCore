@@ -93,7 +93,7 @@ class TC_GAME_API GameObject : public WorldObject, public GridObject<GameObject>
         void Update(uint32 p_time) override;
         GameObjectTemplate const* GetGOInfo() const { return m_goInfo; }
         GameObjectTemplateAddon const* GetTemplateAddon() const { return m_goTemplateAddon; }
-        GameObjectData const* GetGOData() const { return m_goData; }
+        GameObjectData const* GetGameObjectData() const { return m_goData; }
         GameObjectValue const* GetGOValue() const { return &m_goValue; }
 
         bool IsTransport() const;

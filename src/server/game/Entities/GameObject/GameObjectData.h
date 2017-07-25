@@ -20,6 +20,7 @@
 
 #include "Common.h"
 #include "SharedDefines.h"
+#include "SpawnData.h"
 #include "WorldPacket.h"
 #include <string>
 #include <vector>
@@ -593,45 +594,13 @@ struct GameObjectAddon
     uint32 InvisibilityValue;
 };
 
-struct GameObjectGroupTemplateData;
-
-// from `gameobject`
-struct GameObjectData
+// `gameobject` table
+struct GameObjectData : public SpawnData
 {
-    explicit GameObjectData() : id(0), mapid(0), phaseMask(0), posX(0.0f), posY(0.0f), posZ(0.0f), orientation(0.0f), spawntimesecs(0),
-                                animprogress(0), go_state(GO_STATE_ACTIVE), spawnMask(0), artKit(0), ScriptId(0), dbData(true), groupdata(nullptr) { }
-    uint32 id;                                              // entry in gamobject_template
-    uint16 mapid;
-    uint32 phaseMask;
-    float posX;
-    float posY;
-    float posZ;
-    float orientation;
     QuaternionData rotation;
-    int32  spawntimesecs;
-    uint32 animprogress;
-    GOState go_state;
-    uint8 spawnMask;
-    uint8 artKit;
-    uint32 ScriptId;
-    bool dbData;
-    GameObjectGroupTemplateData* groupdata;
-};
-
-enum GameObjectGroupFlags
-{
-    GAMEOBJECTGROUP_FLAG_NONE = 0x00000000,
-    GAMEOBJECTGROUP_FLAG_COMPATIBILITY_MODE = 0x00000001,
-    GAMEOBJECTGROUP_FLAG_MANUAL_SPAWN = 0x00000002,
-    GAMEOBJECTGROUP_FLAG_DYNAMIC = 0x00000004
-};
-
-struct GameObjectGroupTemplateData
-{
-    uint32 groupId;
-    uint32 mapId;
-    uint32 flags;
-    bool isActive;
+    uint32 animprogress = 0;
+    GOState goState = GO_STATE_ACTIVE;
+    uint8 artKit = 0;
 };
 
 #endif // GameObjectData_h__

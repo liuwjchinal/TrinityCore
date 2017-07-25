@@ -527,12 +527,12 @@ typedef std::unordered_map<uint32, CreatureModelInfo> CreatureModelContainer;
 typedef std::unordered_map<uint32, std::vector<uint32>> CreatureQuestItemMap;
 typedef std::unordered_map<uint32, GameObjectTemplate> GameObjectTemplateContainer;
 typedef std::unordered_map<uint32, GameObjectTemplateAddon> GameObjectTemplateAddonContainer;
-typedef std::unordered_map<uint32, CreatureGroupTemplateData> CreatureGroupDataContainer;
+typedef std::unordered_map<uint32, SpawnGroupTemplateData> CreatureGroupDataContainer;
 typedef std::multimap<uint32, ObjectGuid::LowType> CreatureGroupLinkContainer;
 typedef std::unordered_map<ObjectGuid::LowType, GameObjectData> GameObjectDataContainer;
 typedef std::unordered_map<ObjectGuid::LowType, GameObjectAddon> GameObjectAddonContainer;
 typedef std::unordered_map<uint32, std::vector<uint32>> GameObjectQuestItemMap;
-typedef std::unordered_map<uint32, GameObjectGroupTemplateData> GameObjectGroupDataContainer;
+typedef std::unordered_map<uint32, SpawnGroupTemplateData> GameObjectGroupDataContainer;
 typedef std::multimap<uint32, ObjectGuid::LowType> GameObjectGroupLinkContainer;
 typedef std::map<TempSummonGroupKey, std::vector<TempSummonData>> TempSummonDataContainer;
 typedef std::unordered_map<uint32, CreatureLocale> CreatureLocaleContainer;
@@ -1277,6 +1277,16 @@ class TC_GAME_API ObjectMgr
             return nullptr;
         }
 
+        SpawnData const* GetSpawnData(ObjectGuid::LowType guid, SpawnObjectType type)
+        {
+            if (type == OBJECT_TYPE_CREATURE)
+                return GetCreatureData(guid);
+            else if (type == OBJECT_TYPE_GAMEOBJECT)
+                return GetGameObjectData(guid);
+            else
+                ASSERT(false, "Invalid spawn object type %u", uint32(type));
+            return nullptr;
+        }
         CreatureData const* GetCreatureData(ObjectGuid::LowType guid) const
         {
             CreatureDataContainer::const_iterator itr = _creatureDataStore.find(guid);
@@ -1297,6 +1307,14 @@ class TC_GAME_API ObjectMgr
             if (itr == _creatureLocaleStore.end()) return nullptr;
             return &itr->second;
         }
+        GameObjectData const* GetGameObjectData(ObjectGuid::LowType guid) const
+        {
+            GameObjectDataContainer::const_iterator itr = _gameObjectDataStore.find(guid);
+            if (itr == _gameObjectDataStore.end()) return nullptr;
+            return &itr->second;
+        }
+        GameObjectData& NewOrExistGameObjectData(ObjectGuid::LowType guid) { return _gameObjectDataStore[guid]; }
+        void DeleteGameObjectData(ObjectGuid::LowType guid);
         GameObjectLocale const* GetGameObjectLocale(uint32 entry) const
         {
             GameObjectLocaleContainer::const_iterator itr = _gameObjectLocaleStore.find(entry);
@@ -1346,15 +1364,6 @@ class TC_GAME_API ObjectMgr
             return &itr->second;
         }
 
-        GameObjectData const* GetGOData(ObjectGuid::LowType guid) const
-        {
-            GameObjectDataContainer::const_iterator itr = _gameObjectDataStore.find(guid);
-            if (itr == _gameObjectDataStore.end()) return nullptr;
-            return &itr->second;
-        }
-        GameObjectData& NewGOData(ObjectGuid::LowType guid) { return _gameObjectDataStore[guid]; }
-        void DeleteGOData(ObjectGuid::LowType guid);
-
         TrinityString const* GetTrinityString(uint32 entry) const
         {
             TrinityStringContainer::const_iterator itr = _trinityStringStore.find(entry);
@@ -1372,7 +1381,7 @@ class TC_GAME_API ObjectMgr
         void RemoveCreatureFromGrid(ObjectGuid::LowType guid, CreatureData const* data);
         void AddGameobjectToGrid(ObjectGuid::LowType guid, GameObjectData const* data);
         void RemoveGameobjectFromGrid(ObjectGuid::LowType guid, GameObjectData const* data);
-        ObjectGuid::LowType AddGOData(uint32 entry, uint32 map, Position const& pos, QuaternionData const& rot, uint32 spawntimedelay = 0);
+        ObjectGuid::LowType AddGameObjectData(uint32 entry, uint32 map, Position const& pos, QuaternionData const& rot, uint32 spawntimedelay = 0);
         ObjectGuid::LowType AddCreatureData(uint32 entry, uint32 map, Position const& pos, uint32 spawntimedelay = 0);
 
         // reserved names

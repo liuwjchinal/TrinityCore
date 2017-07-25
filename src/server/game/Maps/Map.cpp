@@ -3157,11 +3157,11 @@ void Map::RespawnCreatureList(RespawnVector const& respawnData, bool force)
             Creature* creature = itr->second;
             uint32 groupFlags = 0;
             if (CreatureData const* cdata = creature->GetCreatureData())
-                if (CreatureGroupTemplateData const* groupData = cdata->groupdata)
+                if (SpawnGroupTemplateData const* groupData = cdata->spawnGroupData)
                     groupFlags = groupData->flags;
 
             // Skip this NPC if it's an Escort NPC, on an escort right now that gives a quest, not in an instance and dynamic escort NPCs are enabled.
-            if (creature->IsAlive() && (sWorld->getBoolConfig(CONFIG_RESPAWN_DYNAMIC_ESCORTNPC) && (groupFlags & CREATUREGROUP_FLAG_ESCORTQUESTNPC)))
+            if (creature->IsAlive() && (sWorld->getBoolConfig(CONFIG_RESPAWN_DYNAMIC_ESCORTNPC) && (groupFlags & SPAWNGROUP_FLAG_ESCORTQUESTNPC)))
             {
                 // If not actually on escort, delete the respawn
                 if (!creature->IsEscortNPC(true))
@@ -3203,7 +3203,7 @@ void Map::RespawnCreatureList(RespawnVector const& respawnData, bool force)
                     // Always delete the respawn time
                     RemoveCreatureRespawnTime(ri->spawnId, 0, 0, false, trans);
 
-                    GridCoord thisGrid = Trinity::ComputeGridCoord(cdata->posX, cdata->posY);
+                    GridCoord thisGrid = Trinity::ComputeGridCoord(cdata->GetPositionX(), cdata->GetPositionY());
 
                     CreatureTemplate const* templateData = sObjectMgr->GetCreatureTemplate(cdata->id);
                     if (templateData && !sScriptMgr->CanSpawn(spawnId, cdata->id, templateData, cdata, this))
@@ -3268,11 +3268,11 @@ void Map::RespawnGameObjectList(RespawnVector const& RespawnData, bool force)
             else
             {
                 ObjectGuid::LowType spawnId = ri->spawnId;
-                if (GameObjectData const* cdata = sObjectMgr->GetGOData(spawnId))
+                if (GameObjectData const* cdata = sObjectMgr->GetGameObjectData(spawnId))
                 {
                     // Always delete the respawn time
                     RemoveGORespawnTime(ri->spawnId, 0, 0, false, trans);
-                    GridCoord thisGrid = Trinity::ComputeGridCoord(cdata->posX, cdata->posY);
+                    GridCoord thisGrid = Trinity::ComputeGridCoord(cdata->GetPositionX(), cdata->GetPositionY());
 
                     // Only actually spawn if the grid is loaded, if not it'll be spawned anyway when the grid is loaded
                     if (IsGridLoaded(thisGrid))
@@ -3330,30 +3330,30 @@ void Map::ProcessDynamicModeRespawnScaling(uint32 zoneId, uint32 mode)
     ASSERT(mode == 1);
     RespawnVector rv;
     if (GetRespawnInfo(_creatureRespawnTimesByGridId, _creatureRespawnTimesByZoneId, _creatureRespawnTimesBySpawnId, rv, 0, 0, zoneId, false))
-        DynamicModeScaleRespawnTimes(rv, _zonePlayerCountMap[zoneId], RESPAWNMODE_CREATURE);
+        DynamicModeScaleRespawnTimes(rv, _zonePlayerCountMap[zoneId], OBJECT_TYPE_GAMEOBJECT);
     rv.clear();
     if (GetRespawnInfo(_gameObjectRespawnTimesByGridId, _gameObjectRespawnTimesByZoneId, _gameObjectRespawnTimesBySpawnId, rv, 0, 0, zoneId, false))
-        DynamicModeScaleRespawnTimes(rv, _zonePlayerCountMap[zoneId], RESPAWNMODE_GAMEOBJECT);
+        DynamicModeScaleRespawnTimes(rv, _zonePlayerCountMap[zoneId], OBJECT_TYPE_GAMEOBJECT);
 }
 
-/*static*/ void Map::DynamicModeScaleRespawnTimes(RespawnVector& respawnData, uint32 numPlayers, RespawnMode mode)
+/*static*/ void Map::DynamicModeScaleRespawnTimes(RespawnVector& respawnData, uint32 numPlayers, SpawnObjectType type)
 {
-    float const respawnScalingRate = sWorld->getFloatConfig(mode == RESPAWNMODE_GAMEOBJECT ? CONFIG_RESPAWN_DYNAMICRATE_GAMEOBJECT : CONFIG_RESPAWN_DYNAMICRATE_CREATURE);
-    uint32 const respawnMinimum = sWorld->getIntConfig(mode == RESPAWNMODE_GAMEOBJECT ? CONFIG_RESPAWN_DYNAMICMINIMUM_GAMEOBJECT : CONFIG_RESPAWN_DYNAMICMINIMUM_CREATURE);
+    float const respawnScalingRate = sWorld->getFloatConfig(type == OBJECT_TYPE_GAMEOBJECT ? CONFIG_RESPAWN_DYNAMICRATE_GAMEOBJECT : CONFIG_RESPAWN_DYNAMICRATE_CREATURE);
+    uint32 const respawnMinimum = sWorld->getIntConfig(type == OBJECT_TYPE_GAMEOBJECT ? CONFIG_RESPAWN_DYNAMICMINIMUM_GAMEOBJECT : CONFIG_RESPAWN_DYNAMICMINIMUM_CREATURE);
     double adjustFactor = respawnScalingRate / numPlayers; // use double here, respawn time seconds could be a fairly large number
     if (adjustFactor <= 1.0) // never reduce respawn rate
         return;
 
     for (RespawnInfo* ri : respawnData)
     {
-        switch (mode)
+        switch (type)
         {
-            case RESPAWNMODE_CREATURE:
+            case OBJECT_TYPE_CREATURE:
                 if (CreatureData const* cdata = sObjectMgr->GetCreatureData(ri->spawnId))
                 {
-                    if (CreatureGroupTemplateData* groupdata = cdata->groupdata)
+                    if (SpawnGroupTemplateData const* groupdata = cdata->spawnGroupData)
                     {
-                        if (!(groupdata->flags & CREATUREGROUP_FLAG_DYNAMIC) && !(sWorld->getBoolConfig(CONFIG_RESPAWN_DYNAMIC_ESCORTNPC) && (groupdata->flags & CREATUREGROUP_FLAG_ESCORTQUESTNPC)))
+                        if (!(groupdata->flags & SPAWNGROUP_FLAG_DYNAMIC) && !(sWorld->getBoolConfig(CONFIG_RESPAWN_DYNAMIC_ESCORTNPC) && (groupdata->flags & SPAWNGROUP_FLAG_ESCORTQUESTNPC)))
                             continue;
 
                         time_t adjustedSpawnDelay = ceil(ri->spawnDelay * adjustFactor);
@@ -3363,12 +3363,12 @@ void Map::ProcessDynamicModeRespawnScaling(uint32 zoneId, uint32 mode)
                     }
                 }
                 break;
-            case RESPAWNMODE_GAMEOBJECT:
-                if (GameObjectData const* godata = sObjectMgr->GetGOData(ri->spawnId))
+            case OBJECT_TYPE_GAMEOBJECT:
+                if (GameObjectData const* godata = sObjectMgr->GetGameObjectData(ri->spawnId))
                 {
-                    if (GameObjectGroupTemplateData* groupdata = godata->groupdata)
+                    if (SpawnGroupTemplateData const* groupdata = godata->spawnGroupData)
                     {
-                        if (!(groupdata->flags & GAMEOBJECTGROUP_FLAG_DYNAMIC))
+                        if (!(groupdata->flags & SPAWNGROUP_FLAG_DYNAMIC))
                             continue;
 
                         time_t adjustedSpawnDelay = ceil(ri->spawnDelay * adjustFactor);
@@ -3384,7 +3384,7 @@ void Map::ProcessDynamicModeRespawnScaling(uint32 zoneId, uint32 mode)
     }
 }
 
-bool Map::GetRespawnData(RespawnVector& results, RespawnObjectType type, uint32 zoneId) const
+bool Map::GetRespawnData(RespawnVector& results, SpawnObjectType type, uint32 zoneId) const
 {
     // Obtain references to appropriate respawn stores
     RespawnInfoMultiMap const& gridList = (type == OBJECT_TYPE_CREATURE) ? _creatureRespawnTimesByGridId : _gameObjectRespawnTimesByGridId;
@@ -4378,7 +4378,7 @@ void Map::LoadRespawnTimes()
             uint64 respawnTime = fields[1].GetUInt64();
 
             if (CreatureData const* cdata = sObjectMgr->GetCreatureData(loguid))
-                SaveCreatureRespawnTime(loguid, cdata->id, time_t(respawnTime), GetZoneId(cdata->posX, cdata->posY, cdata->posZ), Trinity::ComputeGridCoord(cdata->posX, cdata->posY).GetId(), false);
+                SaveCreatureRespawnTime(loguid, cdata->id, time_t(respawnTime), GetZoneId(cdata->GetPositionX(), cdata->GetPositionY(), cdata->GetPositionZ()), Trinity::ComputeGridCoord(cdata->GetPositionX(), cdata->GetPositionY()).GetId(), false);
 
         } while (result->NextRow());
     }
@@ -4394,8 +4394,8 @@ void Map::LoadRespawnTimes()
             ObjectGuid::LowType loguid = fields[0].GetUInt32();
             uint64 respawnTime = fields[1].GetUInt64();
 
-            if (GameObjectData const* godata = sObjectMgr->GetGOData(loguid))
-                SaveGORespawnTime(loguid, godata->id, time_t(respawnTime), GetZoneId(godata->posX, godata->posY, godata->posZ), Trinity::ComputeGridCoord(godata->posX, godata->posY).GetId(), false);
+            if (GameObjectData const* godata = sObjectMgr->GetGameObjectData(loguid))
+                SaveGORespawnTime(loguid, godata->id, time_t(respawnTime), GetZoneId(godata->GetPositionX(), godata->GetPositionY(), godata->GetPositionZ()), Trinity::ComputeGridCoord(godata->GetPositionX(), godata->GetPositionY()).GetId(), false);
 
         } while (result->NextRow());
     }

@@ -965,7 +965,7 @@ void Creature::Motion_Initialize()
         GetMotionMaster()->Initialize();
 }
 
-bool Creature::Create(ObjectGuid::LowType guidlow, Map* map, uint32 phaseMask, uint32 entry, float x, float y, float z, float ang, CreatureData const* data /*= nullptr*/, uint32 vehId /*= 0*/, bool dynamic)
+bool Creature::Create(ObjectGuid::LowType guidlow, Map* map, uint32 phaseMask, uint32 entry, Position const& pos, CreatureData const* data /*= nullptr*/, uint32 vehId /*= 0*/, bool dynamic)
 {
     ASSERT(map);
     SetMap(map);
@@ -984,13 +984,13 @@ bool Creature::Create(ObjectGuid::LowType guidlow, Map* map, uint32 phaseMask, u
 
     //! Relocate before CreateFromProto, to initialize coords and allow
     //! returning correct zone id for selecting OutdoorPvP/Battlefield script
-    Relocate(x, y, z, ang);
+    Relocate(pos);
 
     // Check if the position is valid before calling CreateFromProto(), otherwise we might add Auras to Creatures at
     // invalid position, triggering a crash about Auras not removed in the destructor
     if (!IsPositionValid())
     {
-        TC_LOG_ERROR("entities.unit", "Creature::Create(): given coordinates for creature (guidlow %d, entry %d) are not valid (X: %f, Y: %f, Z: %f, O: %f)", guidlow, entry, x, y, z, ang);
+        TC_LOG_ERROR("entities.unit", "Creature::Create(): given coordinates for creature (guidlow %d, entry %d) are not valid (X: %f, Y: %f, Z: %f, O: %f)", guidlow, entry, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), pos.GetOrientation());
         return false;
     }
     UpdatePositionData();
@@ -1027,10 +1027,8 @@ bool Creature::Create(ObjectGuid::LowType guidlow, Map* map, uint32 phaseMask, u
     //! Need to be called after LoadCreaturesAddon - MOVEMENTFLAG_HOVER is set there
     if (HasUnitMovementFlag(MOVEMENTFLAG_HOVER))
     {
-        z += GetFloatValue(UNIT_FIELD_HOVERHEIGHT);
-
         //! Relocate again with updated Z coord
-        Relocate(x, y, z, ang);
+        m_positionZ += GetFloatValue(UNIT_FIELD_HOVERHEIGHT);
     }
 
     LastUsedScriptID = GetScriptId();
@@ -1212,23 +1210,15 @@ void Creature::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
 
     // data->guid = guid must not be updated at save
     data.id = GetEntry();
-    data.mapid = mapid;
     data.phaseMask = phaseMask;
     data.displayid = displayId;
     data.equipmentId = GetCurrentEquipmentId();
     if (!GetTransport())
-    {
-        data.posX = GetPositionX();
-        data.posY = GetPositionY();
-        data.posZ = GetPositionZMinusOffset();
-        data.orientation = GetOrientation();
-    }
+        data.WorldRelocate(this);
     else
     {
-        data.posX = GetTransOffsetX();
-        data.posY = GetTransOffsetY();
-        data.posZ = GetTransOffsetZ();
-        data.orientation = GetTransOffsetO();
+        data.m_mapId = mapid;
+        data.Relocate(GetTransOffsetX(), GetTransOffsetY(), GetTransOffsetZ(), GetTransOffsetO());
     }
 
     data.spawntimesecs = m_respawnDelay;
@@ -1490,7 +1480,7 @@ bool Creature::LoadCreatureFromDB(ObjectGuid::LowType spawnId, Map* map, bool ad
 
     m_spawnId = spawnId;
 
-    m_respawnCompatibilityMode = data->groupdata ? (data->groupdata->flags & CREATUREGROUP_FLAG_COMPATIBILITY_MODE) : true;
+    m_respawnCompatibilityMode = data->spawnGroupData ? (data->spawnGroupData->flags & SPAWNGROUP_FLAG_COMPATIBILITY_MODE) : true;
     m_creatureData = data;
     m_respawnradius = data->spawndist;
     m_respawnDelay = data->spawntimesecs;
@@ -1505,11 +1495,11 @@ bool Creature::LoadCreatureFromDB(ObjectGuid::LowType spawnId, Map* map, bool ad
         }
     }
 
-    if (!Create(map->GenerateLowGuid<HighGuid::Unit>(), map, data->phaseMask, data->id, data->posX, data->posY, data->posZ, data->orientation, data, 0U , !m_respawnCompatibilityMode))
+    if (!Create(map->GenerateLowGuid<HighGuid::Unit>(), map, data->phaseMask, data->id, *data, data, 0U , !m_respawnCompatibilityMode))
         return false;
 
     //We should set first home position, because then AI calls home movement
-    SetHomePosition(data->posX, data->posY, data->posZ, data->orientation);
+    SetHomePosition(*data);
 
     m_deathState = ALIVE;
 
@@ -1524,9 +1514,9 @@ bool Creature::LoadCreatureFromDB(ObjectGuid::LowType spawnId, Map* map, bool ad
         m_deathState = DEAD;
         if (CanFly())
         {
-            float tz = map->GetHeight(GetPhaseMask(), data->posX, data->posY, data->posZ, true, MAX_FALL_DISTANCE);
-            if (data->posZ - tz > 0.1f && Trinity::IsValidMapCoord(tz))
-                Relocate(data->posX, data->posY, tz);
+            float tz = map->GetHeight(GetPhaseMask(), data->GetPositionX(), data->GetPositionY(), data->GetPositionZ(), true, MAX_FALL_DISTANCE);
+            if (data->GetPositionZ() - tz > 0.1f && Trinity::IsValidMapCoord(tz))
+                Relocate(data->GetPositionX(), data->GetPositionY(), tz);
         }
     }
 
@@ -2554,11 +2544,11 @@ void Creature::GetRespawnPosition(float &x, float &y, float &z, float* ori, floa
         // for npcs on transport, this will return transport offset
         if (CreatureData const* data = sObjectMgr->GetCreatureData(GetSpawnId()))
         {
-            x = data->posX;
-            y = data->posY;
-            z = data->posZ;
             if (ori)
-                *ori = data->orientation;
+                data->GetPosition(x, y, z, *ori);
+            else
+                data->GetPosition(x, y, z);
+
             if (dist)
                 *dist = data->spawndist;
 
@@ -2567,12 +2557,11 @@ void Creature::GetRespawnPosition(float &x, float &y, float &z, float* ori, floa
     }
 
     // changed this from current position to home position, fixes world summons with infinite duration (wg npcs for example)
-    Position homePos = GetHomePosition();
-    x = homePos.GetPositionX();
-    y = homePos.GetPositionY();
-    z = homePos.GetPositionZ();
+    Position const& homePos = GetHomePosition();
     if (ori)
-        *ori = homePos.GetOrientation();
+        homePos.GetPosition(x, y, z, *ori);
+    else
+        homePos.GetPosition(x, y, z);
 
     if (dist)
         *dist = 0;
@@ -2626,7 +2615,7 @@ std::string Creature::GetScriptName() const
 uint32 Creature::GetScriptId() const
 {
     if (CreatureData const* creatureData = GetCreatureData())
-        if (uint32 scriptId = creatureData->ScriptId)
+        if (uint32 scriptId = creatureData->scriptId)
             return scriptId;
 
     return sObjectMgr->GetCreatureTemplate(GetEntry())->ScriptID;

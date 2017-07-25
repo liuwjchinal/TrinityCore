@@ -1574,8 +1574,8 @@ bool ScriptMgr::CanSpawn(ObjectGuid::LowType spawnId, uint32 entry, CreatureTemp
     if (!baseTemplate)
         baseTemplate = actTemplate;
     uint32 scriptId = baseTemplate->ScriptID;
-    if (cData && cData->ScriptId)
-        scriptId = cData->ScriptId;
+    if (cData && cData->scriptId)
+        scriptId = cData->scriptId;
     GET_SCRIPT_RET(CreatureScript, scriptId, tmpscript, true);
     return tmpscript->CanSpawn(spawnId, entry, baseTemplate, actTemplate, cData, map);
 }

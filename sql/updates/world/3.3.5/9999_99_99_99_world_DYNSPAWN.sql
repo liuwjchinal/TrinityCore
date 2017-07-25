@@ -241,7 +241,7 @@ INSERT INTO `trinity_string` (`entry`, `content_default`) VALUES
 (5076, 'GameObject group %u not found'),
 (5077, 'Listing %s respawns within %uyd'),
 (5078, 'Listing %s respawns for %s (zone %u)'),
-(5079, 'SpawnID | Entry | GridXY| Zone | Respawn time (Orig Respawn)'),
+(5079, 'SpawnID | Entry | GridXY| Zone | Respawn time (Full)'),
 (5080, 'overdue'),
 (5081, 'creatures'),
 (5082, 'gameobjects');

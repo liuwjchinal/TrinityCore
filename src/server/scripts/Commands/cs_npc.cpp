@@ -271,10 +271,7 @@ public:
             CreatureData& data = sObjectMgr->NewOrExistCreatureData(guid);
             data.id = id;
             data.phaseMask = chr->GetPhaseMaskForSpawn();
-            data.posX = chr->GetTransOffsetX();
-            data.posY = chr->GetTransOffsetY();
-            data.posZ = chr->GetTransOffsetZ();
-            data.orientation = chr->GetTransOffsetO();
+            data.Relocate(chr->GetTransOffsetX(), chr->GetTransOffsetY(), chr->GetTransOffsetZ(), chr->GetTransOffsetO());
 
             Creature* creature = trans->CreateNPCPassenger(guid, &data);
 
@@ -285,7 +282,7 @@ public:
         }
 
         Creature* creature = new Creature();
-        if (!creature->Create(map->GenerateLowGuid<HighGuid::Unit>(), map, chr->GetPhaseMaskForSpawn(), id, x, y, z, o))
+        if (!creature->Create(map->GenerateLowGuid<HighGuid::Unit>(), map, chr->GetPhaseMaskForSpawn(), id, *chr))
         {
             delete creature;
             return false;
@@ -702,7 +699,7 @@ public:
         handler->PSendSysMessage(LANG_NPCINFO_CHAR, target->GetSpawnId(), target->GetGUID().GetCounter(), faction, npcflags, Entry, displayid, nativeid);
         if (target->GetCreatureData())
         {
-            if (CreatureGroupTemplateData* groupData = target->GetCreatureData()->groupdata)
+            if (SpawnGroupTemplateData const* groupData = target->GetCreatureData()->spawnGroupData)
                 handler->PSendSysMessage(LANG_SPAWNINFO_GROUP_ID, groupData->groupId, groupData->flags, groupData->isActive);
         }
         handler->PSendSysMessage(LANG_SPAWNINFO_COMPATIBILITY_MODE, target->GetRespawnCompatibilityMode());
@@ -793,6 +790,9 @@ public:
         ObjectGuid::LowType lowguid = 0;
 
         Creature* creature = handler->getSelectedCreature();
+        Player const* player = handler->GetSession()->GetPlayer();
+        if (!player)
+            return false;
 
         if (!creature)
         {
@@ -812,9 +812,7 @@ public:
                 return false;
             }
 
-            uint32 map_id = data->mapid;
-
-            if (handler->GetSession()->GetPlayer()->GetMapId() != map_id)
+            if (player->GetMapId() != data->GetMapId())
             {
                 handler->PSendSysMessage(LANG_COMMAND_CREATUREATSAMEMAP, lowguid);
                 handler->SetSentErrorMessage(true);
@@ -822,25 +820,12 @@ public:
             }
         }
         else
-        {
             lowguid = creature->GetSpawnId();
-        }
-
-        float x = handler->GetSession()->GetPlayer()->GetPositionX();
-        float y = handler->GetSession()->GetPlayer()->GetPositionY();
-        float z = handler->GetSession()->GetPlayer()->GetPositionZ();
-        float o = handler->GetSession()->GetPlayer()->GetOrientation();
 
         if (creature)
         {
-            if (CreatureData const* data = sObjectMgr->GetCreatureData(creature->GetSpawnId()))
-            {
-                const_cast<CreatureData*>(data)->posX = x;
-                const_cast<CreatureData*>(data)->posY = y;
-                const_cast<CreatureData*>(data)->posZ = z;
-                const_cast<CreatureData*>(data)->orientation = o;
-            }
-            creature->UpdatePosition(x, y, z, o);
+            sObjectMgr->NewOrExistCreatureData(creature->GetSpawnId()).Relocate(*player);
+            creature->UpdatePosition(*player);
             creature->GetMotionMaster()->Initialize();
             if (creature->IsAlive())                            // dead creature will reset movement generator at respawn
             {
@@ -851,10 +836,10 @@ public:
 
         PreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_UPD_CREATURE_POSITION);
 
-        stmt->setFloat(0, x);
-        stmt->setFloat(1, y);
-        stmt->setFloat(2, z);
-        stmt->setFloat(3, o);
+        stmt->setFloat(0, player->GetPositionX());
+        stmt->setFloat(1, player->GetPositionY());
+        stmt->setFloat(2, player->GetPositionZ());
+        stmt->setFloat(3, player->GetOrientation());
         stmt->setUInt32(4, lowguid);
 
         WorldDatabase.Execute(stmt);

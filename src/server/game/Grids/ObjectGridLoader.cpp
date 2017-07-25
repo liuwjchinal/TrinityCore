@@ -131,16 +131,18 @@ void LoadHelper(CellGuidSet const& guid_set, CellCoord &cell, GridRefManager<T> 
             {
                 // If creature in manual spawn group, don't spawn here, unless group is already active.
                 CreatureData const* cdata = sObjectMgr->GetCreatureData(guid);
-                if (cdata && cdata->groupdata && (cdata->groupdata->flags & CREATUREGROUP_FLAG_MANUAL_SPAWN) && !cdata->groupdata->isActive)
+                SpawnGroupTemplateData const* group = cdata ? cdata->spawnGroupData : nullptr;
+                uint32 groupFlags = group ? group->flags : 0;
+                if ((groupFlags & SPAWNGROUP_FLAG_MANUAL_SPAWN) && !group->isActive)
                     continue;
 
                 // If script is blocking spawn, don't spawn but queue for a respawn
                 if (CreatureTemplate const* templateData = sObjectMgr->GetCreatureTemplate(guid))
                 {
-                    bool compatibleMode = cdata->groupdata ? (cdata->groupdata->flags & CREATUREGROUP_FLAG_COMPATIBILITY_MODE) : true;
+                    bool compatibleMode = group ? (groupFlags & SPAWNGROUP_FLAG_COMPATIBILITY_MODE) : true;
                     if (!compatibleMode && !sScriptMgr->CanSpawn(guid, cdata->id, templateData, cdata, map))
                     {
-                        map->SaveCreatureRespawnTime(guid, cdata->id, time(NULL) + 1, map->GetZoneId(cdata->posX, cdata->posY, cdata->posZ), Trinity::ComputeGridCoord(cdata->posX, cdata->posY).GetId(), false);
+                        map->SaveCreatureRespawnTime(guid, cdata->id, time(NULL) + 1, map->GetZoneId(cdata->GetPositionX(), cdata->GetPositionY(), cdata->GetPositionZ()), Trinity::ComputeGridCoord(cdata->GetPositionX(), cdata->GetPositionY()).GetId(), false);
                         continue;
                     }
                 }
@@ -148,8 +150,8 @@ void LoadHelper(CellGuidSet const& guid_set, CellCoord &cell, GridRefManager<T> 
             else if (obj->GetTypeId() == TYPEID_GAMEOBJECT)
             {
                 // If gameobject in manual spawn group, don't spawn here, unless group is already active.
-                GameObjectData const* godata = sObjectMgr->GetGOData(guid);
-                if (godata && godata->groupdata && (godata->groupdata->flags & GAMEOBJECTGROUP_FLAG_MANUAL_SPAWN) && !godata->groupdata->isActive)
+                GameObjectData const* godata = sObjectMgr->GetGameObjectData(guid);
+                if (godata && godata->spawnGroupData && (godata->spawnGroupData->flags & SPAWNGROUP_FLAG_MANUAL_SPAWN) && !godata->spawnGroupData->isActive)
                     continue;
             }
 
