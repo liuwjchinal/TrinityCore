@@ -3301,54 +3301,6 @@ void Map::RespawnGameObjectList(RespawnVector const& RespawnData, bool force)
     CharacterDatabase.CommitTransaction(trans);
 }
 
-void Map::TransformRespawnList(RespawnVector& respawnData, uint32 numPlayers, float adjustFactor, uint32 minAdjustSpawn, uint32 mode)
-{
-    // We only adjust for more than one player
-    if (numPlayers <= 1)
-        return;
-
-    for (RespawnInfo* ri : respawnData)
-    {
-        switch (mode)
-        {
-            case RESPAWNMODE_CREATURE:
-                if (CreatureData const* cdata = sObjectMgr->GetCreatureData(ri->spawnId))
-                {
-                    if (CreatureGroupTemplateData* groupdata = cdata->groupdata)
-                    {
-                        if (!(groupdata->flags & CREATUREGROUP_FLAG_DYNAMIC) && !(sWorld->getBoolConfig(CONFIG_RESPAWN_DYNAMIC_ESCORTNPC) && (groupdata->flags & CREATUREGROUP_FLAG_ESCORTQUESTNPC)))
-                            continue;
-
-                        time_t adjustedSpawn = ri->spawnDelay * (adjustFactor * (numPlayers - 1));
-                        // Check that amount isn't more than the original respawn time, or would result in less than the minimum respawn time
-                        if (adjustedSpawn > ri->spawnDelay || (ri->spawnDelay - adjustedSpawn) < minAdjustSpawn)
-                            adjustedSpawn = ri->spawnDelay - minAdjustSpawn;
-                        ri->respawnTime = ri->originalRespawnTime - adjustedSpawn;
-                    }
-                }
-                break;
-            case RESPAWNMODE_GAMEOBJECT:
-                if (GameObjectData const* godata = sObjectMgr->GetGOData(ri->spawnId))
-                {
-                    if (GameObjectGroupTemplateData* groupdata = godata->groupdata)
-                    {
-                        if (!(groupdata->flags & GAMEOBJECTGROUP_FLAG_DYNAMIC))
-                            continue;
-
-                        time_t adjustedSpawn = ri->spawnDelay * (adjustFactor * (numPlayers - 1));
-                        // Check that amount isn't more than the original respawn time, or would result in less than the minimum respawn time
-                        if (adjustedSpawn > ri->spawnDelay || (ri->spawnDelay - adjustedSpawn) < minAdjustSpawn)
-                            adjustedSpawn = ri->spawnDelay - minAdjustSpawn;
-                        ri->respawnTime = ri->originalRespawnTime - adjustedSpawn;
-                    }
-                }
-                break;
-            default:
-                ASSERT("Invalid Respawn Mode");
-        }
-    }
-}
-
 void Map::ProcessRespawns(uint32 zoneId)
 {
     uint32 now = GameTime::GetGameTimeMS();
@@ -3378,10 +3330,58 @@ void Map::ProcessDynamicModeRespawnScaling(uint32 zoneId, uint32 mode)
     ASSERT(mode == 1);
     RespawnVector rv;
     if (GetRespawnInfo(_creatureRespawnTimesByGridId, _creatureRespawnTimesByZoneId, _creatureRespawnTimesBySpawnId, rv, 0, 0, zoneId, false))
-        TransformRespawnList(rv, _zonePlayerCountMap[zoneId], sWorld->getFloatConfig(CONFIG_RESPAWN_DYNAMICRATE_CREATURE), sWorld->getIntConfig(CONFIG_RESPAWN_DYNAMICMINIMUM_CREATURE), RESPAWNMODE_CREATURE);
+        DynamicModeScaleRespawnTimes(rv, _zonePlayerCountMap[zoneId], RESPAWNMODE_CREATURE);
     rv.clear();
     if (GetRespawnInfo(_gameObjectRespawnTimesByGridId, _gameObjectRespawnTimesByZoneId, _gameObjectRespawnTimesBySpawnId, rv, 0, 0, zoneId, false))
-        TransformRespawnList(rv, _zonePlayerCountMap[zoneId], sWorld->getFloatConfig(CONFIG_RESPAWN_DYNAMICRATE_GAMEOBJECT), sWorld->getIntConfig(CONFIG_RESPAWN_DYNAMICMINIMUM_GAMEOBJECT), RESPAWNMODE_GAMEOBJECT);
+        DynamicModeScaleRespawnTimes(rv, _zonePlayerCountMap[zoneId], RESPAWNMODE_GAMEOBJECT);
+}
+
+/*static*/ void Map::DynamicModeScaleRespawnTimes(RespawnVector& respawnData, uint32 numPlayers, RespawnMode mode)
+{
+    float const respawnScalingRate = sWorld->getFloatConfig(mode == RESPAWNMODE_GAMEOBJECT ? CONFIG_RESPAWN_DYNAMICRATE_GAMEOBJECT : CONFIG_RESPAWN_DYNAMICRATE_CREATURE);
+    uint32 const respawnMinimum = sWorld->getIntConfig(mode == RESPAWNMODE_GAMEOBJECT ? CONFIG_RESPAWN_DYNAMICMINIMUM_GAMEOBJECT : CONFIG_RESPAWN_DYNAMICMINIMUM_CREATURE);
+    double adjustFactor = respawnScalingRate / numPlayers; // use double here, respawn time seconds could be a fairly large number
+    if (adjustFactor <= 1.0) // never reduce respawn rate
+        return;
+
+    for (RespawnInfo* ri : respawnData)
+    {
+        switch (mode)
+        {
+            case RESPAWNMODE_CREATURE:
+                if (CreatureData const* cdata = sObjectMgr->GetCreatureData(ri->spawnId))
+                {
+                    if (CreatureGroupTemplateData* groupdata = cdata->groupdata)
+                    {
+                        if (!(groupdata->flags & CREATUREGROUP_FLAG_DYNAMIC) && !(sWorld->getBoolConfig(CONFIG_RESPAWN_DYNAMIC_ESCORTNPC) && (groupdata->flags & CREATUREGROUP_FLAG_ESCORTQUESTNPC)))
+                            continue;
+
+                        time_t adjustedSpawnDelay = ceil(ri->spawnDelay * adjustFactor);
+                        if (adjustedSpawnDelay < respawnMinimum)
+                            adjustedSpawnDelay = respawnMinimum;
+                        ri->respawnTime = ri->originalRespawnTime - ri->spawnDelay + adjustedSpawnDelay;
+                    }
+                }
+                break;
+            case RESPAWNMODE_GAMEOBJECT:
+                if (GameObjectData const* godata = sObjectMgr->GetGOData(ri->spawnId))
+                {
+                    if (GameObjectGroupTemplateData* groupdata = godata->groupdata)
+                    {
+                        if (!(groupdata->flags & GAMEOBJECTGROUP_FLAG_DYNAMIC))
+                            continue;
+
+                        time_t adjustedSpawnDelay = ceil(ri->spawnDelay * adjustFactor);
+                        if (adjustedSpawnDelay < respawnMinimum)
+                            adjustedSpawnDelay = respawnMinimum;
+                        ri->respawnTime = ri->originalRespawnTime - ri->spawnDelay + adjustedSpawnDelay;
+                    }
+                }
+                break;
+            default:
+                ASSERT("Invalid Respawn Mode");
+        }
+    }
 }
 
 bool Map::GetRespawnData(RespawnVector& results, RespawnObjectType type, uint32 zoneId) const

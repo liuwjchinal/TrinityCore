@@ -3170,10 +3170,10 @@ bool Creature::CanGiveExperience() const
         && !(GetCreatureTemplate()->flags_extra & CREATURE_FLAG_EXTRA_NO_XP_AT_KILL);
 }
 
-bool Creature::IsEscortNPC(bool isEscorting)
+bool Creature::IsEscortNPC(bool onlyIfActive)
 {
-    if (!AI())
+    if (!IsAIEnabled)
         return false;
 
-    return AI()->IsEscortNPC(isEscorting);
+    return AI()->IsEscortNPC(onlyIfActive);
 }

@@ -646,7 +646,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 
         void RespawnCreatureList(RespawnVector const& respawnData, bool force = false);
         void RespawnGameObjectList(RespawnVector const& RespawnData, bool force = false);
-        void TransformRespawnList(RespawnVector& respawnData, uint32 numPlayers, float adjustFactor, uint32 minAdjustSpawn, uint32 mode);
 
         void AddCreatureRespawnInfo(RespawnInfo& Info, bool replace = false)
         {
@@ -766,6 +765,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 
         void ProcessRespawns(uint32 zoneId);
         void ProcessDynamicModeRespawnScaling(uint32 zoneId, uint32 mode);
+        static void DynamicModeScaleRespawnTimes(RespawnVector& respawnData, uint32 numPlayers, RespawnMode mode);
 
         void AddRespawnInfo(RespawnInfoMultiMap& gridList, RespawnInfoMultiMap& zoneList, RespawnInfoMap& spawnList, RespawnInfo& info, bool replace = false);
         bool GetRespawnInfo(RespawnInfoMultiMap const& gridList, RespawnInfoMultiMap const& zoneList, RespawnInfoMap const& spawnList, RespawnVector& respawnData, ObjectGuid::LowType spawnId, uint32 gridId = 0, uint32 zoneId = 0, bool onlyDue = true) const;

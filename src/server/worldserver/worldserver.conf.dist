@@ -1799,42 +1799,32 @@ Respawn.RestartQuietTime = 3
 
 #
 #    Respawn.DynamicRateCreature
-#        Description: The rate at which respawn time is adjusted per extra player found in the zone for creatures.
-#                     This value is multiplied by number of players then this factor is multiplied by original spawn
-#                     time and added to current time in comparison to expected respawn time. Example:
-#                     Dynamic Rate is 0.1 (10%). There are 5 players in the zone. 0.1 * 5 = 0.5. Respawn time is 5 mins.
-#                     Current time is 50000 (secs). 5minsx60 = 300secs. 300*0.5 = 150. So current time for comparison is
-#                     50150. If any creatures have a respawn time of 50150 or less, they will be respawned.
-#        Default:     0.05 - (5% per player)
+#        Description: The rate at which the respawn time is adjusted for high player counts in a zone (for creatures).
+#                     Up to this number of players, the respawn rate is unchanged.
+#                     At double this number in players, you get twice as many respawns, at three times this number, three times the respawns, and so forth.
+#        Default:     10
 
-Respawn.DynamicRateCreature = 0.05
+Respawn.DynamicRateCreature = 10
 
 #
 #    Respawn.DynamicMinimumCreature
-#        Description: The minimum respawn time a creature can have. If the number of players multiplied by DynamicRate
-#                     reaches a point where it would be 100% of the respawn time or more, this respawn time will be applied
-#                     instead.
+#        Description: The minimum respawn time for a creature under dynamic scaling.
 #        Default:     10 - (10 seconds)
 
 Respawn.DynamicMinimumCreature = 10
 
 #
 #    Respawn.DynamicRateGameObject
-#        Description: The rate at which respawn time is adjusted per extra player found in the zone for gameobjects.
-#                     This value is multiplied by number of players then this factor is multiplied by original spawn
-#                     time and added to current time in comparison to expected respawn time. Example:
-#                     Dynamic Rate is 0.1 (10%). There are 5 players in the zone. 0.1 * 5 = 0.5. Respawn time is 5 mins.
-#                     Current time is 50000 (secs). 5minsx60 = 300secs. 300*0.5 = 150. So current time for comparison is
-#                     50150. If any gameobjects have a respawn time of 50150 or less, they will be respawned.
-#        Default:     0.01 - (1% per player)
+#        Description: The rate at which the respawn time is adjusted for high player counts in a zone (for gameobjects).
+#                     Up to this number of players, the respawn rate is unchanged.
+#                     At double this number in players, you get twice as many respawns, at three times this number, three times the respawns, and so forth.
+#        Default:     10
 
-Respawn.DynamicRateGameObject = 0.01
+Respawn.DynamicRateGameObject = 10
 
 #
 #    Respawn.DynamicMinimumGameObject
-#        Description: The minimum respawn time a gameobject can have. If the number of players multiplied by DynamicRate
-#                     reaches a point where it would be 100% of the respawn time or more, this respawn time will be applied
-#                     instead.
+#        Description: The minimum respawn time for a gameobject under dynamic scaling.
 #        Default:     10 - (10 seconds)
 
 Respawn.DynamicMinimumGameObject = 10
