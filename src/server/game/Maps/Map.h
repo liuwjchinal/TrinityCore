@@ -765,8 +765,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         ScriptScheduleMap m_scriptSchedule;
 
         void ProcessRespawns(uint32 zoneId);
-        void ProcessCreatureRespawns(uint32 zoneId);
-        void ProcessGameObjectRespawns(uint32 zoneId);
+        void ProcessDynamicModeRespawnScaling(uint32 zoneId, uint32 mode);
 
         void AddRespawnInfo(RespawnInfoMultiMap& gridList, RespawnInfoMultiMap& zoneList, RespawnInfoMap& spawnList, RespawnInfo& info, bool replace = false);
         bool GetRespawnInfo(RespawnInfoMultiMap const& gridList, RespawnInfoMultiMap const& zoneList, RespawnInfoMap const& spawnList, RespawnVector& respawnData, ObjectGuid::LowType spawnId, uint32 gridId = 0, uint32 zoneId = 0, bool onlyDue = true) const;

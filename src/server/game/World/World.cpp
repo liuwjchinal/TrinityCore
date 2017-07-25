@@ -1253,41 +1253,41 @@ void World::LoadConfigSettings(bool reload)
     // Respawn Settings
     m_int_configs[CONFIG_RESPAWN_MINCHECKINTERVALMS] = sConfigMgr->GetIntDefault("Respawn.MinCheckIntervalMS", 5000);
     m_int_configs[CONFIG_RESPAWN_DYNAMICMODE] = sConfigMgr->GetIntDefault("Respawn.DynamicMode", 0);
-    if (m_int_configs[CONFIG_RESPAWN_DYNAMICMODE] > 2)
+    if (m_int_configs[CONFIG_RESPAWN_DYNAMICMODE] > 1)
     {
-        TC_LOG_ERROR("server.loading", "Respawn.DynamicMode (%u) can only be 0, 1 or 2. Setting to 0", m_int_configs[CONFIG_RESPAWN_DYNAMICMODE]);
+        TC_LOG_ERROR("server.loading", "Invalid value for Respawn.DynamicMode (%u). Set to 0.", m_int_configs[CONFIG_RESPAWN_DYNAMICMODE]);
         m_int_configs[CONFIG_RESPAWN_DYNAMICMODE] = 0;
     }
     m_bool_configs[CONFIG_RESPAWN_DYNAMIC_ESCORTNPC] = sConfigMgr->GetBoolDefault("Respawn.DynamicEscortNPC", true);
     m_int_configs[CONFIG_RESPAWN_GUIDWARNLEVEL] = sConfigMgr->GetIntDefault("Respawn.GuidWarnLevel", 12000000);
     if (m_int_configs[CONFIG_RESPAWN_GUIDWARNLEVEL] > 16777215)
     {
-        TC_LOG_ERROR("server.loading", "Respawn.GuidWarnLevel (%u) cannot be greater than maximum guids (16777215). Setting to 16777215", m_int_configs[CONFIG_RESPAWN_GUIDWARNLEVEL]);
-        m_int_configs[CONFIG_RESPAWN_GUIDWARNLEVEL] = 16777215;
+        TC_LOG_ERROR("server.loading", "Respawn.GuidWarnLevel (%u) cannot be greater than maximum GUID (16777215). Set to 12000000.", m_int_configs[CONFIG_RESPAWN_GUIDWARNLEVEL]);
+        m_int_configs[CONFIG_RESPAWN_GUIDWARNLEVEL] = 12000000;
     }
     m_int_configs[CONFIG_RESPAWN_GUIDALERTLEVEL] = sConfigMgr->GetIntDefault("Respawn.GuidAlertLevel", 16000000);
     if (m_int_configs[CONFIG_RESPAWN_GUIDALERTLEVEL] > 16777215)
     {
-        TC_LOG_ERROR("server.loading", "Respawn.GuidWarnLevel (%u) cannot be greater than maximum guids (16777215). Setting to 16777215", m_int_configs[CONFIG_RESPAWN_GUIDALERTLEVEL]);
-        m_int_configs[CONFIG_RESPAWN_GUIDALERTLEVEL] = 16777215;
+        TC_LOG_ERROR("server.loading", "Respawn.GuidWarnLevel (%u) cannot be greater than maximum GUID (16777215). Set to 16000000.", m_int_configs[CONFIG_RESPAWN_GUIDALERTLEVEL]);
+        m_int_configs[CONFIG_RESPAWN_GUIDALERTLEVEL] = 16000000;
     }
     m_int_configs[CONFIG_RESPAWN_RESTARTQUIETTIME] = sConfigMgr->GetIntDefault("Respawn.RestartQuietTime", 3);
     if (m_int_configs[CONFIG_RESPAWN_RESTARTQUIETTIME] > 23)
     {
-        TC_LOG_ERROR("server.loading", "Respawn.RestartQuietTime (%u) must be an hour, between 0 and 23. Setting to 3", m_int_configs[CONFIG_RESPAWN_RESTARTQUIETTIME]);
+        TC_LOG_ERROR("server.loading", "Respawn.RestartQuietTime (%u) must be an hour, between 0 and 23. Set to 3.", m_int_configs[CONFIG_RESPAWN_RESTARTQUIETTIME]);
         m_int_configs[CONFIG_RESPAWN_RESTARTQUIETTIME] = 3;
     }
     m_float_configs[CONFIG_RESPAWN_DYNAMICRATE_CREATURE] = sConfigMgr->GetFloatDefault("Respawn.DynamicRateCreature", 0.05f);
     if (m_float_configs[CONFIG_RESPAWN_DYNAMICRATE_CREATURE] < 0.0f || m_float_configs[CONFIG_RESPAWN_DYNAMICRATE_CREATURE] > 1.0f)
     {
-        TC_LOG_ERROR("server.loading", "Respawn.DynamicRateCreature (%f) must be between 0 and 1. Setting to 0.05", m_float_configs[CONFIG_RESPAWN_DYNAMICRATE_CREATURE]);
+        TC_LOG_ERROR("server.loading", "Respawn.DynamicRateCreature (%f) must be between 0 and 1. Set to 0.05.", m_float_configs[CONFIG_RESPAWN_DYNAMICRATE_CREATURE]);
         m_float_configs[CONFIG_RESPAWN_DYNAMICRATE_CREATURE] = 0.05f;
     }
     m_int_configs[CONFIG_RESPAWN_DYNAMICMINIMUM_CREATURE] = sConfigMgr->GetIntDefault("Respawn.DynamicMinimumCreature", 10);
     m_float_configs[CONFIG_RESPAWN_DYNAMICRATE_GAMEOBJECT] = sConfigMgr->GetFloatDefault("Respawn.DynamicRateGameObject", 0.01f);
     if (m_float_configs[CONFIG_RESPAWN_DYNAMICRATE_GAMEOBJECT] < 0.0f || m_float_configs[CONFIG_RESPAWN_DYNAMICRATE_GAMEOBJECT] > 1.0f)
     {
-        TC_LOG_ERROR("server.loading", "Respawn.DynamicRateGameObject (%f) must be between 0 and 1. Setting to 0.01", m_float_configs[CONFIG_RESPAWN_DYNAMICRATE_GAMEOBJECT]);
+        TC_LOG_ERROR("server.loading", "Respawn.DynamicRateGameObject (%f) must be between 0 and 1. Set to 0.01.", m_float_configs[CONFIG_RESPAWN_DYNAMICRATE_GAMEOBJECT]);
         m_float_configs[CONFIG_RESPAWN_DYNAMICRATE_GAMEOBJECT] = 0.01f;
     }
     m_int_configs[CONFIG_RESPAWN_DYNAMICMINIMUM_GAMEOBJECT] = sConfigMgr->GetIntDefault("Respawn.DynamicMinimumGameObject", 10);

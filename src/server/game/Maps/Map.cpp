@@ -3098,8 +3098,7 @@ bool Map::GetRespawnInfo(RespawnInfoMultiMap const& gridList, RespawnInfoMultiMa
 void Map::DeleteRespawnInfo(RespawnInfoMultiMap& gridList, RespawnInfoMultiMap& zoneList, RespawnInfoMap& spawnList, ObjectGuid::LowType spawnId, uint32 gridId, uint32 zoneId, bool onlyDue)
 {
     // For delete, a bit more important to ensure only one present (or none to erase all)
-    if ((spawnId && (gridId || zoneId)) || (gridId && (spawnId || zoneId)) || (zoneId && (spawnId || gridId)))
-        ASSERT(false && "too many active parameters passed to Map::deleteRespawnInfo");
+    ASSERT((!spawnId && !gridId) || (!spawnId && !zoneId) || (!gridId && !zoneId), "too many active parameters passed to Map::DeleteRespawnInfo!");
 
     RespawnVector rv;
     if (GetRespawnInfo(gridList, zoneList, spawnList, rv, spawnId, gridId, zoneId, onlyDue))
@@ -3361,31 +3360,28 @@ void Map::ProcessRespawns(uint32 zoneId)
     // Store this time, so we don't check so often
     lastTime = now;
 
+    // If dynamic mode is enabled, do respawn time scaling
+    if (uint32 mode = sWorld->getIntConfig(CONFIG_RESPAWN_DYNAMICMODE))
+        ProcessDynamicModeRespawnScaling(zoneId, mode);
+
     // Then do the actual respawns
-    ProcessCreatureRespawns(zoneId);
-    ProcessGameObjectRespawns(zoneId);
-}
-
-void Map::ProcessCreatureRespawns(uint32 zoneId)
-{
     RespawnVector rv;
-    if (GetRespawnInfo(_creatureRespawnTimesByGridId, _creatureRespawnTimesByZoneId, _creatureRespawnTimesBySpawnId, rv, 0, 0, zoneId, false))
-        TransformRespawnList(rv, _zonePlayerCountMap[zoneId], sWorld->getFloatConfig(CONFIG_RESPAWN_DYNAMICRATE_CREATURE), sWorld->getIntConfig(CONFIG_RESPAWN_DYNAMICMINIMUM_CREATURE), RESPAWNMODE_CREATURE);
-
-    rv.clear();
     if (GetCreatureRespawnInfo(rv, 0, 0, zoneId))
         RespawnCreatureList(rv);
-}
-
-void Map::ProcessGameObjectRespawns(uint32 zoneId)
-{
-    RespawnVector rv;
-    if (GetRespawnInfo(_gameObjectRespawnTimesByGridId, _gameObjectRespawnTimesByZoneId, _gameObjectRespawnTimesBySpawnId, rv, 0, 0, zoneId, false))
-        TransformRespawnList(rv, _zonePlayerCountMap[zoneId], sWorld->getFloatConfig(CONFIG_RESPAWN_DYNAMICRATE_GAMEOBJECT), sWorld->getIntConfig(CONFIG_RESPAWN_DYNAMICMINIMUM_GAMEOBJECT), RESPAWNMODE_GAMEOBJECT);
-
     rv.clear();
     if (GetGameObjectRespawnInfo(rv, 0, 0, zoneId))
         RespawnGameObjectList(rv);
+}
+
+void Map::ProcessDynamicModeRespawnScaling(uint32 zoneId, uint32 mode)
+{
+    ASSERT(mode == 1);
+    RespawnVector rv;
+    if (GetRespawnInfo(_creatureRespawnTimesByGridId, _creatureRespawnTimesByZoneId, _creatureRespawnTimesBySpawnId, rv, 0, 0, zoneId, false))
+        TransformRespawnList(rv, _zonePlayerCountMap[zoneId], sWorld->getFloatConfig(CONFIG_RESPAWN_DYNAMICRATE_CREATURE), sWorld->getIntConfig(CONFIG_RESPAWN_DYNAMICMINIMUM_CREATURE), RESPAWNMODE_CREATURE);
+    rv.clear();
+    if (GetRespawnInfo(_gameObjectRespawnTimesByGridId, _gameObjectRespawnTimesByZoneId, _gameObjectRespawnTimesBySpawnId, rv, 0, 0, zoneId, false))
+        TransformRespawnList(rv, _zonePlayerCountMap[zoneId], sWorld->getFloatConfig(CONFIG_RESPAWN_DYNAMICRATE_GAMEOBJECT), sWorld->getIntConfig(CONFIG_RESPAWN_DYNAMICMINIMUM_GAMEOBJECT), RESPAWNMODE_GAMEOBJECT);
 }
 
 bool Map::GetRespawnData(RespawnVector& results, RespawnObjectType type, uint32 zoneId) const
