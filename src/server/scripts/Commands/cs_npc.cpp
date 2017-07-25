@@ -703,9 +703,9 @@ public:
         if (target->GetCreatureData())
         {
             if (CreatureGroupTemplateData* groupData = target->GetCreatureData()->groupdata)
-                handler->PSendSysMessage(LANG_NPCINFO_GROUP_ID, groupData->groupId, groupData->flags, groupData->isActive);
+                handler->PSendSysMessage(LANG_SPAWNINFO_GROUP_ID, groupData->groupId, groupData->flags, groupData->isActive);
         }
-        handler->PSendSysMessage(LANG_NPCINFO_COMPATIBILITY_MODE, target->GetRespawnCompatibilityMode());
+        handler->PSendSysMessage(LANG_SPAWNINFO_COMPATIBILITY_MODE, target->GetRespawnCompatibilityMode());
         handler->PSendSysMessage(LANG_NPCINFO_LEVEL, target->getLevel());
         handler->PSendSysMessage(LANG_NPCINFO_EQUIPMENT, target->GetCurrentEquipmentId(), target->GetOriginalEquipmentId());
         handler->PSendSysMessage(LANG_NPCINFO_HEALTH, target->GetCreateHealth(), target->GetMaxHealth(), target->GetHealth());

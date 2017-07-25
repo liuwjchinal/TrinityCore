@@ -1251,7 +1251,7 @@ void World::LoadConfigSettings(bool reload)
     }
 
     // Respawn Settings
-    m_int_configs[CONFIG_RESPAWN_MINCELLCHECKMS] = sConfigMgr->GetIntDefault("Respawn.MinCellCheckMS", 5000);
+    m_int_configs[CONFIG_RESPAWN_MINCHECKINTERVALMS] = sConfigMgr->GetIntDefault("Respawn.MinCheckIntervalMS", 5000);
     m_int_configs[CONFIG_RESPAWN_DYNAMICMODE] = sConfigMgr->GetIntDefault("Respawn.DynamicMode", 0);
     if (m_int_configs[CONFIG_RESPAWN_DYNAMICMODE] > 2)
     {
@@ -1276,24 +1276,6 @@ void World::LoadConfigSettings(bool reload)
     {
         TC_LOG_ERROR("server.loading", "Respawn.RestartQuietTime (%u) must be an hour, between 0 and 23. Setting to 3", m_int_configs[CONFIG_RESPAWN_RESTARTQUIETTIME]);
         m_int_configs[CONFIG_RESPAWN_RESTARTQUIETTIME] = 3;
-    }
-    m_int_configs[CONFIG_RESPAWN_ACTIVITYSCOPECREATURE] = sConfigMgr->GetIntDefault("Respawn.ActivityScopeCreature", 0);
-    if (m_int_configs[CONFIG_RESPAWN_ACTIVITYSCOPECREATURE] > 2)
-    {
-        TC_LOG_ERROR("server.loading", "Respawn.ActivityScopeCreature (%u) can only be 0, 1 or 2. Setting to 0", m_int_configs[CONFIG_RESPAWN_ACTIVITYSCOPECREATURE]);
-        m_int_configs[CONFIG_RESPAWN_ACTIVITYSCOPECREATURE] = 0;
-    }
-    m_int_configs[CONFIG_RESPAWN_ACTIVITYSCOPEGAMEOBJECT] = sConfigMgr->GetIntDefault("Respawn.ActivityScopeGameObject", 2);
-    if (m_int_configs[CONFIG_RESPAWN_ACTIVITYSCOPEGAMEOBJECT] > 2)
-    {
-        TC_LOG_ERROR("server.loading", "Respawn.ActivityScopeGameObject (%u) can only be 0, 1 or 2. Setting to 2", m_int_configs[CONFIG_RESPAWN_ACTIVITYSCOPEGAMEOBJECT]);
-        m_int_configs[CONFIG_RESPAWN_ACTIVITYSCOPEGAMEOBJECT] = 2;
-    }
-    m_float_configs[CONFIG_RESPAWN_DYNAMICRADIUS] = sConfigMgr->GetFloatDefault("Respawn.DynamicRadius", 300.0f);
-    if (m_float_configs[CONFIG_RESPAWN_DYNAMICRADIUS] > SIZE_OF_GRIDS)
-    {
-        TC_LOG_ERROR("server.loading", "Respawn.DynamicRadius (%f) is larger than grid max size. Setting to %f", m_float_configs[CONFIG_RESPAWN_DYNAMICRADIUS], SIZE_OF_GRIDS);
-        m_float_configs[CONFIG_RESPAWN_DYNAMICRADIUS] = SIZE_OF_GRIDS;
     }
     m_float_configs[CONFIG_RESPAWN_DYNAMICRATE_CREATURE] = sConfigMgr->GetFloatDefault("Respawn.DynamicRateCreature", 0.05f);
     if (m_float_configs[CONFIG_RESPAWN_DYNAMICRATE_CREATURE] < 0.0f || m_float_configs[CONFIG_RESPAWN_DYNAMICRATE_CREATURE] > 1.0f)

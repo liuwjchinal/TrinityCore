@@ -725,13 +725,13 @@ public:
         // If we have a real object, send some info about it
         if (thisGO)
         {
-            handler->PSendSysMessage(LANG_GOINFO_GUIDINFO, thisGO->GetGUID().ToString().c_str());
-            handler->PSendSysMessage(LANG_GOINFO_SPAWNID_LOCATION, thisGO->GetSpawnId(), thisGO->GetPositionX(), thisGO->GetPositionY(), thisGO->GetPositionZ());
+            handler->PSendSysMessage(LANG_SPAWNINFO_GUIDINFO, thisGO->GetGUID().ToString().c_str());
+            handler->PSendSysMessage(LANG_SPAWNINFO_SPAWNID_LOCATION, thisGO->GetSpawnId(), thisGO->GetPositionX(), thisGO->GetPositionY(), thisGO->GetPositionZ());
             if (Player* player = handler->GetSession()->GetPlayer())
             {
                 Position playerPos = player->GetPosition();
                 float dist = thisGO->GetExactDist(&playerPos);
-                handler->PSendSysMessage(LANG_GOINFO_DISTANCEFROMPLAYER, dist);
+                handler->PSendSysMessage(LANG_SPAWNINFO_DISTANCEFROMPLAYER, dist);
             }
         }
         handler->PSendSysMessage(LANG_GOINFO_ENTRY, entry);
@@ -743,10 +743,10 @@ public:
             if (object->ToGameObject() && object->ToGameObject()->GetGOData() && object->ToGameObject()->GetGOData()->groupdata)
             {
                 GameObjectGroupTemplateData* groupdata = object->ToGameObject()->GetGOData()->groupdata;
-                handler->PSendSysMessage(LANG_GOINFO_GROUP_ID, groupdata->groupId, groupdata->flags, groupdata->isActive);
+                handler->PSendSysMessage(LANG_SPAWNINFO_GROUP_ID, groupdata->groupId, groupdata->flags, groupdata->isActive);
             }
             if (object->ToGameObject())
-                handler->PSendSysMessage(LANG_GOINFO_COMPATIBILITY_MODE, object->ToGameObject()->GetRespawnCompatibilityMode());
+                handler->PSendSysMessage(LANG_SPAWNINFO_COMPATIBILITY_MODE, object->ToGameObject()->GetRespawnCompatibilityMode());
         }
         handler->PSendSysMessage(LANG_GOINFO_NAME, name.c_str());
         handler->PSendSysMessage(LANG_GOINFO_SIZE, gameObjectInfo->size);

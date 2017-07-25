@@ -2337,7 +2337,7 @@ void Creature::SaveRespawnTime(uint32 forceDelay, bool savetodb)
     }
 
     uint32 thisRespawnTime = forceDelay ? time(NULL) + forceDelay : m_respawnTime;
-    GetMap()->SaveCreatureRespawnTime(m_spawnId, GetEntry(), thisRespawnTime, GetMap()->GetZoneAreaGridId(Map::OBJECT_TYPE_CREATURE, GetHomePosition().GetPositionX(), GetHomePosition().GetPositionY(), GetHomePosition().GetPositionZ()), Trinity::ComputeGridCoord(GetHomePosition().GetPositionX(), GetHomePosition().GetPositionY()).GetId(), m_creatureData->dbData ? savetodb : false);
+    GetMap()->SaveCreatureRespawnTime(m_spawnId, GetEntry(), thisRespawnTime, GetMap()->GetZoneId(GetHomePosition().GetPositionX(), GetHomePosition().GetPositionY(), GetHomePosition().GetPositionZ()), Trinity::ComputeGridCoord(GetHomePosition().GetPositionX(), GetHomePosition().GetPositionY()).GetId(), m_creatureData->dbData ? savetodb : false);
 }
 
 // this should not be called by petAI or

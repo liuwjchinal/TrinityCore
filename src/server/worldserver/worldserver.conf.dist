@@ -1717,13 +1717,12 @@ Creature.MovingStopTimeForPlayer = 180000
 ###################################################################################################
 # SPAWN/RESPAWN SETTINGS
 #
-#    Respawn.MinCellCheckMS
-#        Description: Minimum time before a particular cell will check for respawned creatures.
-#                     While kept active by players this throttles the checks upon which creatures
-#                     should be respawned.
+#    Respawn.MinCheckIntervalMS
+#        Description: Minimum time that needs to pass between respawn checks for any given zone.
+#                     The actual time may be longer if there are no active objects in the zone.
 #        Default:     5000 - 5 seconds
 
-Respawn.MinCellCheckMS = 5000
+Respawn.MinCheckIntervalMS = 5000
 
 #
 #    Respawn.DynamicMode
@@ -1738,16 +1737,6 @@ Respawn.MinCellCheckMS = 5000
 #                     0 - No dynamic respawn function
 
 Respawn.DynamicMode = 1
-
-#
-#    Respawn.DynamicRadius
-#        Description: Specified the radius that the search for either players or alive creatures
-#                     should work within. This has no effect if Respawn.DynamicMode = 0. This is also
-#                     only used if ActivityScope is cell level. For Zone/Area, the total players for
-#                     that scope is used.
-#        Default:     300 - 300 yards
-
-Respawn.DynamicRadius = 300
 
 #
 #    Respawn.DynamicEscortNPC
@@ -1813,25 +1802,11 @@ Respawn.AlertRestartReason = "Urgent Maintenance"
 Respawn.RestartQuietTime = 3
 
 #
-#    Respawn.ActivityScopeCreature
-#        Description: The scope at which player activity will trigger respawn/despawn events. When a player
-#                     is in the same cell/area/zone as the object periodic checks will be made for creatures
-#                     due to be respawned. If there are pooled creatures setup, then it's advised to use
-#                     area or zone. If not, then cell is the best option.
-#        Default:     0 - Cell level
-#                     1 - Area level
-#                     2 - Zone level
-
-Respawn.ActivityScopeCreature = 0
-
-#
 #    Respawn.DynamicRateCreature
-#        Description: The rate at which respawn time is adjusted per extra player found in the "region".
-#                     Region is defined by ActivityScope. For Area/Zone it's number of players per Area/Zone.
-#                     For cell, it's number of players within <DynamicRadius> setting yards of the respawn point.
+#        Description: The rate at which respawn time is adjusted per extra player found in the zone for creatures.
 #                     This value is multiplied by number of players then this factor is multiplied by original spawn
 #                     time and added to current time in comparison to expected respawn time. Example:
-#                     Dynamic Rate is 0.1 (10%). There are 5 players in range. 0.1 * 5 = 0.5. Respawn time is 5 mins.
+#                     Dynamic Rate is 0.1 (10%). There are 5 players in the zone. 0.1 * 5 = 0.5. Respawn time is 5 mins.
 #                     Current time is 50000 (secs). 5minsx60 = 300secs. 300*0.5 = 150. So current time for comparison is
 #                     50150. If any creatures have a respawn time of 50150 or less, they will be respawned.
 #        Default:     0.05 - (5% per player)
@@ -1848,25 +1823,11 @@ Respawn.DynamicRateCreature = 0.05
 Respawn.DynamicMinimumCreature = 10
 
 #
-#    Respawn.ActivityScopeGameObject
-#        Description: The scope at which player activity will trigger respawn/despawn events. When a player
-#                     is in the same cell/area/zone as the object periodic checks will be made for gameobjects
-#                     due to be respawned. If there are pooled gameobjects setup (by default nodes are pooled)
-#                     then it's advised to use area or zone. If not, then cell is the best option.
-#        Default:     2 - Zone level
-#                     1 - Area level
-#                     0 - Cell level
-
-Respawn.ActivityScopeGameObject = 2
-
-#
 #    Respawn.DynamicRateGameObject
-#        Description: The rate at which respawn time is adjusted per extra player found in the "region".
-#                     Region is defined by ActivityScope. For Area/Zone it's number of players per Area/Zone.
-#                     For cell, it's number of players within <DynamicRadius> setting yards of the respawn point.
+#        Description: The rate at which respawn time is adjusted per extra player found in the zone for gameobjects.
 #                     This value is multiplied by number of players then this factor is multiplied by original spawn
 #                     time and added to current time in comparison to expected respawn time. Example:
-#                     Dynamic Rate is 0.1 (10%). There are 5 players in range. 0.1 * 5 = 0.5. Respawn time is 5 mins.
+#                     Dynamic Rate is 0.1 (10%). There are 5 players in the zone. 0.1 * 5 = 0.5. Respawn time is 5 mins.
 #                     Current time is 50000 (secs). 5minsx60 = 300secs. 300*0.5 = 150. So current time for comparison is
 #                     50150. If any gameobjects have a respawn time of 50150 or less, they will be respawned.
 #        Default:     0.01 - (1% per player)

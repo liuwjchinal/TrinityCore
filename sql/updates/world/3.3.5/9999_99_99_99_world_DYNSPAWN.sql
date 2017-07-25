@@ -229,31 +229,30 @@ UPDATE `trinity_string`
 SET `content_default` = '%d - %s X:%f Y:%f Z:%f MapId:%d %s %s'
 WHERE `entry` = 1110;
 
-DELETE FROM `trinity_string` WHERE `entry` BETWEEN 5070 AND 5084;
-
 -- Add new trinity strings for extra npc/gobject info lines
+DELETE FROM `trinity_string` WHERE `entry` BETWEEN 5070 AND 5083;
 INSERT INTO `trinity_string` (`entry`, `content_default`) VALUES
-(5070, 'Group: %u - Flags %u - Active %u'),
+(5070, 'Spawn group: %u (Flags: %u, Active: %u)'),
 (5071, 'Compatibility Mode: %u'),
-(5072, 'Group: %u - Flags %u - Active %u'),
-(5073, 'Compatibility Mode: %u'),
-(5074, 'GUID: %s'),
-(5075, 'SpawnID: %u, location (%f, %f, %f)'),
-(5076, 'Distance from player %f'),
-(5077, 'Creature group %u not found'),
-(5078, 'GameObject group %u not found'),
-(5079, 'Listing %s respawns for the current scope'),
-(5080, 'SpawnID Entry   GridXY  Scope Respawn time Orig Respawn'),
-(5081, '%7u %7u [%02u,%02u] %5u %13s %s'),
-(5082, 'overdue'),
-(5083, 'creatures'),
-(5084, 'gameobjects');
+(5072, 'GUID: %s'),
+(5073, 'SpawnID: %u, location (%f, %f, %f)'),
+(5074, 'Distance from player %f'),
+(5075, 'Creature group %u not found'),
+(5076, 'GameObject group %u not found'),
+(5077, 'Listing %s respawns within %uyd'),
+(5078, 'Listing %s respawns for %s (zone %u)'),
+(5079, 'SpawnID | Entry | GridXY| Zone | Respawn time (Orig Respawn)'),
+(5080, 'overdue'),
+(5081, 'creatures'),
+(5082, 'gameobjects');
 
 -- Add new NPC/Gameobject commands
-DELETE FROM `command` WHERE `name` IN ('npc spawngroup', 'npc despawngroup', 'gobject spawngroup', 'gobject despawngroup', 'list respawns', 'debug dynamicfactor');
+DELETE FROM `command` WHERE `name` IN ('npc spawngroup', 'npc despawngroup', 'gobject spawngroup', 'gobject despawngroup', 'list respawns');
 INSERT INTO `command` (`name`, `permission`, `help`) VALUES
-('npc spawngroup', 853, 'Syntax: .npc spawngroup $groupId [ignorerespawn] [force]'),
-('npc despawngroup', 854, 'Syntax: .npc despawngroup $groupId [removerespawntime]'),
-('gobject spawngroup', 855, 'Syntax: .gobject spawngroup $groupId [ignorerespawn] [force]'),
-('gobject despawngroup', 856, 'Syntax: .gobject despawngroup $groupId [removerespawntime]'),
-('list respawns', 857, 'Syntax: .list respawns [*] [grid] (Enter * for all respawns within current map, or grid for all in current grid)');
+('npc spawngroup', 856, 'Syntax: .npc spawngroup $groupId [ignorerespawn] [force]'),
+('npc despawngroup', 857, 'Syntax: .npc despawngroup $groupId [removerespawntime]'),
+('gobject spawngroup', 858, 'Syntax: .gobject spawngroup $groupId [ignorerespawn] [force]'),
+('gobject despawngroup', 859, 'Syntax: .gobject despawngroup $groupId [removerespawntime]'),
+('list respawns', 860, 'Syntax: .list respawns [distance]
+
+Lists all pending respawns within <distance> yards, or within current zone if not specified.');

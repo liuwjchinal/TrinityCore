@@ -643,28 +643,25 @@ public:
         return true;
     }
 
+    static char const* GetZoneName(uint32 zoneId, LocaleConstant locale)
+    {
+        AreaTableEntry const* zoneEntry = sAreaTableStore.LookupEntry(zoneId);
+        return zoneEntry ? zoneEntry->area_name[locale] : "<unknown zone>";
+    }
     static bool HandleListRespawnsCommand(ChatHandler* handler, char const* args)
     {
-        Player const* player = handler->GetSession()->GetPlayer();
-
         // We need a player
+        Player const* player = handler->GetSession()->GetPlayer();
         if (!player)
             return false;
-
-        Map* map = player->GetMap();
-
         // And we need a map
+        Map const* map = player->GetMap();
         if (!map)
             return false;
 
-        bool allMaps = false;
-        uint32 grid = 0;
-
-        // Accept arguments for all respawns for this map, or grid level.
-        if (*args && strcmp(args,"*") == 0)
-            allMaps = true;
-        else if (*args  && strcmp(args, "grid") == 0)
-            grid = Trinity::ComputeGridCoord(player->GetPositionX(), player->GetPositionY()).GetId();
+        uint32 range = 0;
+        if (*args)
+            range = atoi((char*)args);
 
         RespawnVector respawns;
         LocaleConstant locale = handler->GetSession()->GetSessionDbcLocale();
@@ -672,37 +669,59 @@ public:
         char const* stringCreature = sObjectMgr->GetTrinityString(LANG_LIST_RESPAWNS_CREATURES, locale);
         char const* stringGameobject = sObjectMgr->GetTrinityString(LANG_LIST_RESPAWNS_GAMEOBJECTS, locale);
 
-        if (map->GetRespawnData(respawns, Map::OBJECT_TYPE_CREATURE, false, 0, grid, allMaps, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ()))
+        uint32 zoneId = player->GetZoneId();
+        if (range)
+            handler->PSendSysMessage(LANG_LIST_RESPAWNS_RANGE, stringCreature, range);
+        else
+            handler->PSendSysMessage(LANG_LIST_RESPAWNS_ZONE, stringCreature, GetZoneName(zoneId, handler->GetSessionDbcLocale()), zoneId);
+        handler->PSendSysMessage(LANG_LIST_RESPAWNS_LISTHEADER);
+        if (map->GetRespawnData(respawns, Map::OBJECT_TYPE_CREATURE, range ? 0 : zoneId))
         {
-            handler->PSendSysMessage(LANG_LIST_RESPAWNS, stringCreature);
-            handler->PSendSysMessage(LANG_LIST_RESPAWNS_LISTHEADER);
             for (RespawnInfo* ri : respawns)
             {
+                if (range)
+                {
+                    CreatureData const* data = sObjectMgr->GetCreatureData(ri->spawnId);
+                    if (!data)
+                        continue;
+                    if (!player->IsInDist(data->posX, data->posY, data->posZ, range))
+                        continue;
+                }
                 uint32 gridY = ri->gridId / MAX_NUMBER_OF_GRIDS;
-                uint32 gridX = ri->gridId - (gridY * MAX_NUMBER_OF_GRIDS);
+                uint32 gridX = ri->gridId % MAX_NUMBER_OF_GRIDS;
 
                 std::string respawnTimeOrig = (ri->originalRespawnTime > time(NULL)) ? secsToTimeString(uint64(ri->originalRespawnTime - time(NULL)), true) : stringOverdue;
                 std::string respawnTime = ri->respawnTime > time(NULL) ? secsToTimeString(uint64(ri->respawnTime - time(NULL)), true) : stringOverdue;
-                handler->PSendSysMessage(LANG_LIST_RESPAWNS_LISTDATA, ri->spawnId, ri->entry, gridX, gridY, ri->cellAreaZoneId, respawnTime.c_str(), respawnTimeOrig.c_str());
+                handler->PSendSysMessage("%u | %u | [%02u,%02u] | %s (%u) | %s (%s)", ri->spawnId, ri->entry, gridX, gridY, GetZoneName(ri->zoneId, handler->GetSessionDbcLocale()), ri->zoneId, respawnTime.c_str(), respawnTimeOrig.c_str());
             }
         }
 
         respawns.clear();
-        if (map->GetRespawnData(respawns, Map::OBJECT_TYPE_GAMEOBJECT, false, 0, grid, allMaps, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ()))
+        if (range)
+            handler->PSendSysMessage(LANG_LIST_RESPAWNS_RANGE, stringGameobject, range);
+        else
+            handler->PSendSysMessage(LANG_LIST_RESPAWNS_ZONE, stringGameobject, GetZoneName(zoneId, handler->GetSessionDbcLocale()), zoneId);
+        handler->PSendSysMessage(LANG_LIST_RESPAWNS_LISTHEADER);
+        if (map->GetRespawnData(respawns, Map::OBJECT_TYPE_GAMEOBJECT, range ? 0 : zoneId))
         {
-            handler->PSendSysMessage(LANG_LIST_RESPAWNS, stringGameobject);
-            handler->PSendSysMessage(LANG_LIST_RESPAWNS_LISTHEADER);
             for (RespawnInfo* ri : respawns)
             {
+                if (range)
+                {
+                    GameObjectData const* data = sObjectMgr->GetGOData(ri->spawnId);
+                    if (!data)
+                        continue;
+                    if (!player->IsInDist(data->posX, data->posY, data->posZ, range))
+                        continue;
+                }
                 uint32 gridY = ri->gridId / MAX_NUMBER_OF_GRIDS;
-                uint32 gridX = ri->gridId - (gridY * MAX_NUMBER_OF_GRIDS);
+                uint32 gridX = ri->gridId % MAX_NUMBER_OF_GRIDS;
 
                 std::string respawnTimeOrig = ri->originalRespawnTime > time(NULL) ? secsToTimeString(uint64(ri->originalRespawnTime - time(NULL)), true) : stringOverdue;
                 std::string respawnTime = ri->respawnTime > time(NULL) ? secsToTimeString(uint64(ri->respawnTime - time(NULL)), true) : stringOverdue;
-                handler->PSendSysMessage(LANG_LIST_RESPAWNS_LISTDATA, ri->spawnId, ri->entry, gridX, gridY, ri->cellAreaZoneId, respawnTime.c_str(), respawnTimeOrig.c_str());
+                handler->PSendSysMessage("%u | %u | [% 02u, % 02u] | %s (%u) | %s(%s)", ri->spawnId, ri->entry, gridX, gridY, GetZoneName(ri->zoneId, handler->GetSessionDbcLocale()), ri->zoneId, respawnTime.c_str(), respawnTimeOrig.c_str());
             }
         }
-
         return true;
     }
 };
