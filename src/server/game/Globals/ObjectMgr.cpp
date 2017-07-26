@@ -6783,7 +6783,7 @@ bool ObjectMgr::SpawnCreatureGroup(uint32 groupId, Map* map, bool ignoreRespawn,
                 if (ignoreRespawn)
                 {
                     // If ignoring respawn timer we need to delete here, else creature will be added invisible and awaiting old style respawn
-                    map->RemoveCreatureRespawnTime(guid);
+                    map->RemoveRespawnTime(SPAWN_TYPE_CREATURE, guid);
                 }
                 else
                 {
@@ -6799,7 +6799,7 @@ bool ObjectMgr::SpawnCreatureGroup(uint32 groupId, Map* map, bool ignoreRespawn,
                 else if (creatureList)
                     creatureList->push_back(newcreature->GetGUID());
 
-                map->RemoveCreatureRespawnTime(guid);
+                map->RemoveRespawnTime(SPAWN_TYPE_CREATURE, guid);
             }
         }
     }
@@ -6841,7 +6841,7 @@ bool ObjectMgr::DespawnCreatureGroup(uint32 groupId, Map* map, bool deleteRespaw
             for (auto itr = bounds.first; itr != bounds.second; ++itr)
             {
                 if (deleteRespawnTimes)
-                    map->RemoveCreatureRespawnTime(itr->second->GetSpawnId());
+                    map->RemoveRespawnTime(SPAWN_TYPE_CREATURE, itr->second->GetSpawnId());
 
                 unloadList.push_back(itr->second);
             }
@@ -6890,7 +6890,7 @@ bool ObjectMgr::SpawnGOGroup(uint32 groupId, Map* map, bool ignoreRespawn, bool 
                 if (ignoreRespawn)
                 {
                     // If ignoring respawn timer we need to delete here
-                    map->RemoveGORespawnTime(guid);
+                    map->RemoveRespawnTime(SPAWN_TYPE_GAMEOBJECT, guid);
                 }
                 else
                 {
@@ -6906,7 +6906,7 @@ bool ObjectMgr::SpawnGOGroup(uint32 groupId, Map* map, bool ignoreRespawn, bool 
                 else if (gameobjectList)
                     gameobjectList->push_back(newgo->GetGUID());
 
-                map->RemoveGORespawnTime(guid);
+                map->RemoveRespawnTime(SPAWN_TYPE_GAMEOBJECT, guid);
             }
         }
     }
@@ -6949,7 +6949,7 @@ bool ObjectMgr::DespawnGOGroup(uint32 groupId, Map* map, bool deleteRespawnTimes
             for (auto itr = bounds.first; itr != bounds.second; ++itr)
             {
                 if (deleteRespawnTimes)
-                    map->RemoveGORespawnTime(itr->second->GetSpawnId());
+                    map->RemoveRespawnTime(SPAWN_TYPE_GAMEOBJECT, itr->second->GetSpawnId());
 
                 unloadList.push_back(itr->second);
             }

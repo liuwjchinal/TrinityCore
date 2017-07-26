@@ -1277,11 +1277,11 @@ class TC_GAME_API ObjectMgr
             return nullptr;
         }
 
-        SpawnData const* GetSpawnData(ObjectGuid::LowType guid, SpawnObjectType type)
+        SpawnData const* GetSpawnData(SpawnObjectType type, ObjectGuid::LowType guid)
         {
-            if (type == OBJECT_TYPE_CREATURE)
+            if (type == SPAWN_TYPE_CREATURE)
                 return GetCreatureData(guid);
-            else if (type == OBJECT_TYPE_GAMEOBJECT)
+            else if (type == SPAWN_TYPE_GAMEOBJECT)
                 return GetGameObjectData(guid);
             else
                 ASSERT(false, "Invalid spawn object type %u", uint32(type));

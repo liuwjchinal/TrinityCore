@@ -675,7 +675,7 @@ public:
         else
             handler->PSendSysMessage(LANG_LIST_RESPAWNS_ZONE, stringCreature, GetZoneName(zoneId, handler->GetSessionDbcLocale()), zoneId);
         handler->PSendSysMessage(LANG_LIST_RESPAWNS_LISTHEADER);
-        if (map->GetRespawnData(respawns, OBJECT_TYPE_CREATURE, range ? 0 : zoneId))
+        if (map->GetRespawnData(respawns, SPAWN_TYPEMASK_CREATURE, range ? 0 : zoneId))
         {
             for (RespawnInfo* ri : respawns)
             {
@@ -702,7 +702,7 @@ public:
         else
             handler->PSendSysMessage(LANG_LIST_RESPAWNS_ZONE, stringGameobject, GetZoneName(zoneId, handler->GetSessionDbcLocale()), zoneId);
         handler->PSendSysMessage(LANG_LIST_RESPAWNS_LISTHEADER);
-        if (map->GetRespawnData(respawns, OBJECT_TYPE_GAMEOBJECT, range ? 0 : zoneId))
+        if (map->GetRespawnData(respawns, SPAWN_TYPEMASK_GAMEOBJECT, range ? 0 : zoneId))
         {
             for (RespawnInfo* ri : respawns)
             {

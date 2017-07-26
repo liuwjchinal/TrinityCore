@@ -244,13 +244,12 @@ void npc_escortAI::UpdateAI(uint32 diff)
                         me->setDeathState(JUST_DIED);
                         me->Respawn();
                     }
-                    else if (sWorld->getBoolConfig(CONFIG_RESPAWN_DYNAMIC_ESCORTNPC))
+                    else
                     {
-                        me->GetMap()->RemoveCreatureRespawnTime(me->GetSpawnId(), 0, 0, true);
+                        if (sWorld->getBoolConfig(CONFIG_RESPAWN_DYNAMIC_ESCORTNPC))
+                            me->GetMap()->RemoveRespawnTime(SPAWN_TYPE_CREATURE, me->GetSpawnId(), true);
                         me->DespawnOrUnsummon();
                     }
-                    else
-                        me->DespawnOrUnsummon();
 
                     return;
                 }
@@ -299,7 +298,7 @@ void npc_escortAI::UpdateAI(uint32 diff)
                     me->Respawn();
                 }
                 else if (m_bCanInstantRespawn && (sWorld->getBoolConfig(CONFIG_RESPAWN_DYNAMIC_ESCORTNPC) && (groupFlags & SPAWNGROUP_FLAG_ESCORTQUESTNPC)))
-                    me->GetMap()->RemoveCreatureRespawnTime(me->GetSpawnId(), 0, 0, true);
+                    me->GetMap()->RemoveRespawnTime(SPAWN_TYPE_CREATURE, me->GetSpawnId(), true);
                 else
                     me->DespawnOrUnsummon();
 

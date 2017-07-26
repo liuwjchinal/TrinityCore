@@ -472,7 +472,7 @@ public:
 
     static bool HandleNpcDeleteCommand(ChatHandler* handler, char const* args)
     {
-        Creature* unit = nullptr;
+        Creature* creature = nullptr;
 
         if (*args)
         {
@@ -484,22 +484,27 @@ public:
             ObjectGuid::LowType lowguid = atoul(cId);
             if (!lowguid)
                 return false;
-            unit = handler->GetCreatureFromPlayerMapByDbGuid(lowguid);
+            creature = handler->GetCreatureFromPlayerMapByDbGuid(lowguid);
         }
         else
-            unit = handler->getSelectedCreature();
+            creature = handler->getSelectedCreature();
 
-        if (!unit || unit->IsPet() || unit->IsTotem())
+        if (!creature || creature->IsPet() || creature->IsTotem())
         {
             handler->SendSysMessage(LANG_SELECT_CREATURE);
             handler->SetSentErrorMessage(true);
             return false;
         }
 
-        // Delete the creature
-        unit->CombatStop();
-        unit->DeleteFromDB();
-        unit->AddObjectToRemoveList();
+        if (TempSummon* summon = creature->ToTempSummon())
+            summon->UnSummon();
+        else
+        {
+            // Delete the creature
+            creature->CombatStop();
+            creature->DeleteFromDB();
+            creature->AddObjectToRemoveList();
+        }
 
         handler->SendSysMessage(LANG_COMMAND_DELCREATMESSAGE);
 

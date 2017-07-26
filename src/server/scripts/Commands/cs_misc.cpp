@@ -1917,8 +1917,7 @@ public:
         Cell::VisitGridObjects(player, worker, player->GetGridActivationRange());
 
         // Now handle any that had despawned, but had respawn time logged.
-        player->GetMap()->RemoveCreatureRespawnTime(0, 0, Trinity::ComputeGridCoord(player->GetPositionX(), player->GetPositionY()).GetId(), true);
-        player->GetMap()->RemoveGORespawnTime(0, 0, Trinity::ComputeGridCoord(player->GetPositionX(), player->GetPositionY()).GetId(), true);
+        player->GetMap()->RemoveRespawnTime(SPAWN_TYPEMASK_ALL, RESPAWNINFO_SCOPE_GRID, Trinity::ComputeGridCoord(player->GetPositionX(), player->GetPositionY()).GetId(), true);
 
         return true;
     }
