@@ -137,14 +137,11 @@ void LoadHelper(CellGuidSet const& guid_set, CellCoord &cell, GridRefManager<T> 
                     continue;
 
                 // If script is blocking spawn, don't spawn but queue for a respawn
-                if (CreatureTemplate const* templateData = sObjectMgr->GetCreatureTemplate(guid))
+                bool compatibleMode = group ? (groupFlags & SPAWNGROUP_FLAG_COMPATIBILITY_MODE) : true;
+                if (!compatibleMode && !sScriptMgr->CanSpawn(guid, cdata->id, cdata, map))
                 {
-                    bool compatibleMode = group ? (groupFlags & SPAWNGROUP_FLAG_COMPATIBILITY_MODE) : true;
-                    if (!compatibleMode && !sScriptMgr->CanSpawn(guid, cdata->id, cdata, map))
-                    {
-                        map->SaveRespawnTime(SPAWN_TYPE_CREATURE, guid, cdata->id, time(NULL) + urand(4,7), map->GetZoneId(cdata->GetPositionX(), cdata->GetPositionY(), cdata->GetPositionZ()), Trinity::ComputeGridCoord(cdata->GetPositionX(), cdata->GetPositionY()).GetId(), false);
-                        continue;
-                    }
+                    map->SaveRespawnTime(SPAWN_TYPE_CREATURE, guid, cdata->id, time(NULL) + urand(4,7), map->GetZoneId(cdata->GetPositionX(), cdata->GetPositionY(), cdata->GetPositionZ()), Trinity::ComputeGridCoord(cdata->GetPositionX(), cdata->GetPositionY()).GetId(), false);
+                    continue;
                 }
             }
             else if (obj->GetTypeId() == TYPEID_GAMEOBJECT)

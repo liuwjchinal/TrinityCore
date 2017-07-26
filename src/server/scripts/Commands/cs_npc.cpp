@@ -259,10 +259,6 @@ public:
             return false;
 
         Player* chr = handler->GetSession()->GetPlayer();
-        float x = chr->GetPositionX();
-        float y = chr->GetPositionY();
-        float z = chr->GetPositionZ();
-        float o = chr->GetOrientation();
         Map* map = chr->GetMap();
 
         if (Transport* trans = chr->GetTransport())
