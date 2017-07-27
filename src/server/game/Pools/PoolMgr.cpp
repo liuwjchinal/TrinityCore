@@ -392,7 +392,7 @@ void PoolGroup<Creature>::Spawn1Object(PoolObject* obj)
         {
             Creature* creature = new Creature();
             //TC_LOG_DEBUG("pool", "Spawning creature %u", guid);
-            if (!creature->LoadCreatureFromDB(obj->guid, map))
+            if (!creature->LoadFromDB(obj->guid, map))
             {
                 delete creature;
                 return;
@@ -416,7 +416,7 @@ void PoolGroup<GameObject>::Spawn1Object(PoolObject* obj)
         {
             GameObject* pGameobject = new GameObject;
             //TC_LOG_DEBUG("pool", "Spawning gameobject %u", guid);
-            if (!pGameobject->LoadGameObjectFromDB(obj->guid, map, false))
+            if (!pGameobject->LoadFromDB(obj->guid, map, false))
             {
                 delete pGameobject;
                 return;

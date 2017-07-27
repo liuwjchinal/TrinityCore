@@ -899,7 +899,8 @@ void GameObject::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
     // update in loaded data (changing data only in this place)
     GameObjectData& data = sObjectMgr->NewOrExistGameObjectData(m_spawnId);
 
-    // data->guid = guid must not be updated at save
+    // data.spawnId = guid must not be updated at save
+    ASSERT(data.spawnId == m_spawnId);
     data.id = GetEntry();
     data.WorldRelocate(this);
     data.phaseMask = phaseMask;
@@ -941,7 +942,7 @@ void GameObject::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
     WorldDatabase.CommitTransaction(trans);
 }
 
-bool GameObject::LoadGameObjectFromDB(ObjectGuid::LowType spawnId, Map* map, bool addToMap)
+bool GameObject::LoadFromDB(ObjectGuid::LowType spawnId, Map* map, bool addToMap)
 {
     GameObjectData const* data = sObjectMgr->GetGameObjectData(spawnId);
 
@@ -960,7 +961,7 @@ bool GameObject::LoadGameObjectFromDB(ObjectGuid::LowType spawnId, Map* map, boo
     uint32 artKit = data->artKit;
 
     m_spawnId = spawnId;
-    m_respawnCompatibilityMode = data->spawnGroupData ? (data->spawnGroupData->flags & SPAWNGROUP_FLAG_COMPATIBILITY_MODE) : true;
+    m_respawnCompatibilityMode = !data->spawnGroupData || (data->spawnGroupData->flags & SPAWNGROUP_FLAG_COMPATIBILITY_MODE);
     if (!Create(map->GenerateLowGuid<HighGuid::GameObject>(), entry, map, phaseMask, *data, data->rotation, animprogress, go_state, artKit, !m_respawnCompatibilityMode))
         return false;
 

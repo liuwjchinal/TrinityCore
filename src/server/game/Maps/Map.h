@@ -483,8 +483,9 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         Corpse* GetCorpse(ObjectGuid const& guid);
         Creature* GetCreature(ObjectGuid const& guid);
         GameObject* GetGameObject(ObjectGuid const& guid);
-        Creature* GetCreatureBySpawnId(ObjectGuid::LowType spawnId);
-        GameObject* GetGameObjectBySpawnId(ObjectGuid::LowType spawnId);
+        Creature* GetCreatureBySpawnId(ObjectGuid::LowType spawnId) const;
+        GameObject* GetGameObjectBySpawnId(ObjectGuid::LowType spawnId) const;
+        WorldObject* GetWorldObjectBySpawnId(SpawnObjectType type, ObjectGuid::LowType spawnId) const { return (type == SPAWN_TYPE_GAMEOBJECT) ? reinterpret_cast<WorldObject*>(GetGameObjectBySpawnId(spawnId)) : reinterpret_cast<WorldObject*>(GetCreatureBySpawnId(spawnId)); }
         Transport* GetTransport(ObjectGuid const& guid);
         DynamicObject* GetDynamicObject(ObjectGuid const& guid);
         Pet* GetPet(ObjectGuid const& guid);
@@ -493,9 +494,11 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 
         typedef std::unordered_multimap<ObjectGuid::LowType, Creature*> CreatureBySpawnIdContainer;
         CreatureBySpawnIdContainer& GetCreatureBySpawnIdStore() { return _creatureBySpawnIdStore; }
+        CreatureBySpawnIdContainer const& GetCreatureBySpawnIdStore() const { return _creatureBySpawnIdStore; }
 
         typedef std::unordered_multimap<ObjectGuid::LowType, GameObject*> GameObjectBySpawnIdContainer;
         GameObjectBySpawnIdContainer& GetGameObjectBySpawnIdStore() { return _gameobjectBySpawnIdStore; }
+        GameObjectBySpawnIdContainer const& GetGameObjectBySpawnIdStore() const { return _gameobjectBySpawnIdStore; }
 
         std::unordered_set<Corpse*> const* GetCorpsesInCell(uint32 cellId) const
         {
@@ -552,6 +555,8 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
             RespawnInfoMap::const_iterator itr = _gameObjectRespawnTimesBySpawnId.find(dbGuid);
             return itr != _gameObjectRespawnTimesBySpawnId.end() ? itr->second->respawnTime : time_t(0);
         }
+
+        time_t GetRespawnTime(SpawnObjectType type, ObjectGuid::LowType spawnId) const { return (type == SPAWN_TYPE_GAMEOBJECT) ? GetGORespawnTime(spawnId) : GetCreatureRespawnTime(spawnId); }
 
         void UpdatePlayerZoneStats(uint32 oldZone, uint32 newZone);
 

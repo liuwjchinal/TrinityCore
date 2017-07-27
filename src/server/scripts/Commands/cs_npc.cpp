@@ -265,6 +265,7 @@ public:
         {
             ObjectGuid::LowType guid = map->GenerateLowGuid<HighGuid::Unit>();
             CreatureData& data = sObjectMgr->NewOrExistCreatureData(guid);
+            data.spawnId = guid;
             data.id = id;
             data.phaseMask = chr->GetPhaseMaskForSpawn();
             data.Relocate(chr->GetTransOffsetX(), chr->GetTransOffsetY(), chr->GetTransOffsetZ(), chr->GetTransOffsetO());
@@ -293,7 +294,7 @@ public:
         creature->CleanupsBeforeDelete();
         delete creature;
         creature = new Creature();
-        if (!creature->LoadCreatureFromDB(db_guid, map))
+        if (!creature->LoadFromDB(db_guid, map))
         {
             delete creature;
             return false;
@@ -701,7 +702,7 @@ public:
         if (target->GetCreatureData())
         {
             if (SpawnGroupTemplateData const* groupData = target->GetCreatureData()->spawnGroupData)
-                handler->PSendSysMessage(LANG_SPAWNINFO_GROUP_ID, groupData->groupId, groupData->flags, groupData->isActive);
+                handler->PSendSysMessage(LANG_SPAWNINFO_GROUP_ID, groupData->name.c_str(), groupData->groupId, groupData->flags, groupData->isActive);
         }
         handler->PSendSysMessage(LANG_SPAWNINFO_COMPATIBILITY_MODE, target->GetRespawnCompatibilityMode());
         handler->PSendSysMessage(LANG_NPCINFO_LEVEL, target->getLevel());
@@ -1570,16 +1571,16 @@ public:
 
         Player* player = handler->GetSession()->GetPlayer();
 
-        std::vector <ObjectGuid> creatureList;
-        if (!sObjectMgr->SpawnCreatureGroup(groupId, player->GetMap(), ignoreRespawn, force, &creatureList))
+        std::vector <WorldObject*> creatureList;
+        if (!sObjectMgr->SpawnGroupSpawn(groupId, player->GetMap(), ignoreRespawn, force, &creatureList))
         {
             handler->PSendSysMessage(LANG_NPCSPAWNGROUP_BADGROUP, groupId);
             handler->SetSentErrorMessage(true);
             return false;
         }
 
-        for (ObjectGuid thisGuid : creatureList)
-            handler->PSendSysMessage("%s", thisGuid.ToString().c_str());
+        for (WorldObject* obj : creatureList)
+            handler->PSendSysMessage("%s", obj->GetGUID().ToString().c_str());
 
         return true;
     }
@@ -1610,7 +1611,7 @@ public:
 
         Player* player = handler->GetSession()->GetPlayer();
 
-        if (!sObjectMgr->DespawnCreatureGroup(groupId, player->GetMap(), deleteRespawnTimes))
+        if (!sObjectMgr->SpawnGroupDespawn(groupId, player->GetMap(), deleteRespawnTimes))
         {
             handler->PSendSysMessage(LANG_NPCSPAWNGROUP_BADGROUP, groupId);
             handler->SetSentErrorMessage(true);

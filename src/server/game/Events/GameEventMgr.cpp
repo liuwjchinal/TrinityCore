@@ -1209,7 +1209,7 @@ void GameEventMgr::GameEventSpawn(int16 event_id)
             {
                 Creature* creature = new Creature();
                 //TC_LOG_DEBUG("misc", "Spawning creature %u", *itr);
-                if (!creature->LoadCreatureFromDB(*itr, map))
+                if (!creature->LoadFromDB(*itr, map))
                     delete creature;
             }
         }
@@ -1237,7 +1237,7 @@ void GameEventMgr::GameEventSpawn(int16 event_id)
                 GameObject* pGameobject = new GameObject;
                 //TC_LOG_DEBUG("misc", "Spawning gameobject %u", *itr);
                 /// @todo find out when it is add to map
-                if (!pGameobject->LoadGameObjectFromDB(*itr, map, false))
+                if (!pGameobject->LoadFromDB(*itr, map, false))
                     delete pGameobject;
                 else
                 {

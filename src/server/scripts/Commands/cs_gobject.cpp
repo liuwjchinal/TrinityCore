@@ -171,7 +171,7 @@ public:
 
         object = new GameObject();
         // this will generate a new guid if the object is in an instance
-        if (!object->LoadGameObjectFromDB(guidLow, map))
+        if (!object->LoadFromDB(guidLow, map))
         {
             delete object;
             return false;
@@ -432,7 +432,7 @@ public:
         object->Delete();
 
         object = new GameObject();
-        if (!object->LoadGameObjectFromDB(guidLow, map))
+        if (!object->LoadFromDB(guidLow, map))
         {
             delete object;
             return false;
@@ -471,16 +471,16 @@ public:
 
         Player* player = handler->GetSession()->GetPlayer();
 
-        std::vector <ObjectGuid> gameobjectList;
-        if (!sObjectMgr->SpawnGOGroup(groupId, player->GetMap(), ignoreRespawn, force, &gameobjectList))
+        std::vector <WorldObject*> gameobjectList;
+        if (!sObjectMgr->SpawnGroupSpawn(groupId, player->GetMap(), ignoreRespawn, force, &gameobjectList))
         {
             handler->PSendSysMessage(LANG_GOSPAWNGROUP_BADGROUP, groupId);
             handler->SetSentErrorMessage(true);
             return false;
         }
 
-        for (ObjectGuid thisGuid : gameobjectList)
-            handler->PSendSysMessage("%s", thisGuid.ToString().c_str());
+        for (WorldObject* obj : gameobjectList)
+            handler->PSendSysMessage("%s", obj->GetGUID().ToString().c_str());
 
         return true;
     }
@@ -511,7 +511,7 @@ public:
 
         Player* player = handler->GetSession()->GetPlayer();
 
-        if (!sObjectMgr->DespawnGOGroup(groupId, player->GetMap(), deleteRespawnTimes))
+        if (!sObjectMgr->SpawnGroupDespawn(groupId, player->GetMap(), deleteRespawnTimes))
         {
             handler->PSendSysMessage(LANG_GOSPAWNGROUP_BADGROUP, groupId);
             handler->SetSentErrorMessage(true);
@@ -580,7 +580,7 @@ public:
         object->Delete();
 
         object = new GameObject();
-        if (!object->LoadGameObjectFromDB(guidLow, map))
+        if (!object->LoadFromDB(guidLow, map))
         {
             delete object;
             return false;
@@ -742,8 +742,8 @@ public:
         {
             if (object->ToGameObject() && object->ToGameObject()->GetGameObjectData() && object->ToGameObject()->GetGameObjectData()->spawnGroupData)
             {
-                SpawnGroupTemplateData const* groupdata = object->ToGameObject()->GetGameObjectData()->spawnGroupData;
-                handler->PSendSysMessage(LANG_SPAWNINFO_GROUP_ID, groupdata->groupId, groupdata->flags, groupdata->isActive);
+                SpawnGroupTemplateData const* groupData = object->ToGameObject()->GetGameObjectData()->spawnGroupData;
+                handler->PSendSysMessage(LANG_SPAWNINFO_GROUP_ID, groupData->name.c_str(), groupData->groupId, groupData->flags, groupData->isActive);
             }
             if (object->ToGameObject())
                 handler->PSendSysMessage(LANG_SPAWNINFO_COMPATIBILITY_MODE, object->ToGameObject()->GetRespawnCompatibilityMode());

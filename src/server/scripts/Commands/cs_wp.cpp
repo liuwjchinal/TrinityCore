@@ -672,7 +672,7 @@ public:
             wpCreature->SaveToDB(map->GetId(), (1 << map->GetSpawnMode()), chr->GetPhaseMaskForSpawn());
             // To call _LoadGoods(); _LoadQuests(); CreateTrainerSpells();
             /// @todo Should we first use "Create" then use "LoadFromDB"?
-            if (!wpCreature->LoadCreatureFromDB(wpCreature->GetSpawnId(), map))
+            if (!wpCreature->LoadFromDB(wpCreature->GetSpawnId(), map))
             {
                 handler->PSendSysMessage(LANG_WAYPOINT_VP_NOTCREATED, VISUAL_WAYPOINT);
                 delete wpCreature;
@@ -891,7 +891,7 @@ public:
                 WorldDatabase.Execute(stmt);
 
                 // To call _LoadGoods(); _LoadQuests(); CreateTrainerSpells();
-                if (!wpCreature->LoadCreatureFromDB(wpCreature->GetSpawnId(), map))
+                if (!wpCreature->LoadFromDB(wpCreature->GetSpawnId(), map))
                 {
                     handler->PSendSysMessage(LANG_WAYPOINT_VP_NOTCREATED, id);
                     delete wpCreature;
@@ -945,7 +945,7 @@ public:
             }
 
             creature->SaveToDB(map->GetId(), (1 << map->GetSpawnMode()), chr->GetPhaseMaskForSpawn());
-            if (!creature->LoadCreatureFromDB(creature->GetSpawnId(), map))
+            if (!creature->LoadFromDB(creature->GetSpawnId(), map))
             {
                 handler->PSendSysMessage(LANG_WAYPOINT_VP_NOTCREATED, id);
                 delete creature;
@@ -994,7 +994,7 @@ public:
             }
 
             creature->SaveToDB(map->GetId(), (1 << map->GetSpawnMode()), chr->GetPhaseMaskForSpawn());
-            if (!creature->LoadCreatureFromDB(creature->GetSpawnId(), map))
+            if (!creature->LoadFromDB(creature->GetSpawnId(), map))
             {
                 handler->PSendSysMessage(LANG_WAYPOINT_NOTCREATED, id);
                 delete creature;

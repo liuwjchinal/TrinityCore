@@ -1,56 +1,32 @@
--- Create databases for creature group template, and creature group membership
+-- Create databases for spawn group template, and spawn group membership
 -- Current flags
 -- 		0x01	Legacy Spawn Mode (spawn using legacy spawn system)
---		0x02	Manual Spawn (don't automatically spawn creature, instead spawn from core as part of script)
-DROP TABLE IF EXISTS `creature_group_template`;
-CREATE TABLE `creature_group_template` (
-  `groupId` int(10) unsigned NOT NULL DEFAULT '0',
-  `groupName` varchar(100) NOT NULL DEFAULT '',
+--		0x02	Manual Spawn (don't automatically spawn, instead spawned by core as part of script)
+DROP TABLE IF EXISTS `spawn_group_template`;
+CREATE TABLE `spawn_group_template` (
+  `groupId` int(10) unsigned NOT NULL,
+  `groupName` varchar(100) NOT NULL,
   `groupFlags` int(10) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`groupId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-DROP TABLE IF EXISTS `creature_group`;
-CREATE TABLE `creature_group` (
-  `groupId` int(10) unsigned NOT NULL DEFAULT '0',
-  `creatureId` int(10) unsigned NOT NULL DEFAULT '0',
-  PRIMARY KEY (`groupId`, `creatureId`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- Current flags
--- 		0x01	Legacy Spawn Mode (spawn using legacy spawn system)
---		0x02	Manual Spawn (don't automatically spawn creature, instead spawn from core as part of script)
-DROP TABLE IF EXISTS `gameobject_group_template`;
-CREATE TABLE `gameobject_group_template` (
-  `groupId` int(10) unsigned NOT NULL DEFAULT '0',
-  `groupName` varchar(100) NOT NULL DEFAULT '',
-  `groupFlags` int(10) unsigned NOT NULL DEFAULT '0',
-  PRIMARY KEY (`groupId`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-DROP TABLE IF EXISTS `gameobject_group`;
-CREATE TABLE `gameobject_group` (
-  `groupId` int(10) unsigned NOT NULL DEFAULT '0',
-  `gameobjectId` int(10) unsigned NOT NULL DEFAULT '0',
-  PRIMARY KEY (`groupId`, `gameobjectId`)
+DROP TABLE IF EXISTS `spawn_group`;
+CREATE TABLE `spawn_group` (
+  `groupId` int(10) unsigned NOT NULL,
+  `spawnType` tinyint(10) unsigned NOT NULL,
+  `spawnId` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`groupId`,`spawnType`,`spawnId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- Create the default groups
-INSERT INTO `creature_group_template` (`groupId`, `groupName`, `groupFlags`) VALUES
-(0, 'Default Group', 0),
-(1, 'Legacy Group', 1),
-(2, 'Dynamic Spawn Group', 4),
-(3, 'Quest giving Escort NPCs', 8);
-
--- Create the default groups
-INSERT INTO `gameobject_group_template` (`groupId`, `groupName`, `groupFlags`) VALUES
-(0, 'Default Group', 0),
-(1, 'Legacy Group', 1),
-(2, 'Dynamic Spawn Group', 4),
-(4, 'Mining/Herb nodes (Dynamic)', 4);
+INSERT INTO `spawn_group_template` (`groupId`, `groupName`, `groupFlags`) VALUES
+(0, 'Default Group', 0x01),
+(1, 'Legacy Group', (0x01|0x02)),
+(2, 'Dynamic Scaling Group', (0x01|0x08)),
+(3, 'Quest giving Escort NPCs', (0x01|0x10)),
+(4, 'Mining/Herb nodes (Dynamic)', (0x01|0x08));
 
 -- Create creature dynamic spawns group (creatures with quest items, or subjects of quests with less than 30min spawn time)
-DELETE FROM `creature_group` WHERE `groupId` = 2;
 DROP TABLE IF EXISTS `creature_temp_group`;
 CREATE TEMPORARY TABLE `creature_temp_group`
 (
@@ -92,15 +68,14 @@ INNER JOIN `quest_template` ON `RequiredNpcOrGo4` = C.`id`
 WHERE `spawntimesecs` < 1800
 AND `map` IN (0, 1, 530, 571);
 
-INSERT INTO `creature_group` (`groupId`, `creatureId`)
-SELECT DISTINCT 2, `creatureId`
+INSERT INTO `spawn_group` (`groupId`, `spawnType`, `spawnId`)
+SELECT DISTINCT 2, 0, `creatureId`
 FROM `creature_temp_group`;
 
 DROP TABLE `creature_temp_group`;
 
 -- Create gameobject dynamic spawns group (gameobjects with quest items, or subjects of quests with less than 30min spawn time)
 
-DELETE FROM `gameobject_group` WHERE `groupId` = 2;
 DROP TABLE IF EXISTS `gameobject_temp_group`;
 CREATE TEMPORARY TABLE `gameobject_temp_group`
 (
@@ -145,8 +120,8 @@ INNER JOIN `gameobject_temp_group_ids` ON `entryid` = G.`id`
 WHERE `spawntimesecs` < 1800
 AND `map` IN (0, 1, 530, 571);
 
-INSERT INTO `gameobject_group` (`groupId`, `gameobjectId`)
-SELECT DISTINCT 2, `gameobjectId`
+INSERT INTO `spawn_group` (`groupId`, `spawnType`, `spawnId`)
+SELECT DISTINCT 2, 1, `gameobjectId`
 FROM `gameobject_temp_group`;
 
 DROP TABLE `gameobject_temp_group`;
@@ -154,9 +129,8 @@ ALTER TABLE `gameobject_temp_group_ids` DROP INDEX `entryid`;
 DROP TABLE `gameobject_temp_group_ids`;
 
 -- Add mining nodes/herb nodes to profession node group
-DELETE FROM `gameobject_group` WHERE `groupId` = 4;
-INSERT INTO `gameobject_group` (`groupId`, `gameobjectId`)
-SELECT 4, `guid`
+INSERT INTO `spawn_group` (`groupId`, `spawnType`, `spawnId`)
+SELECT 4, 1, `guid`
 FROM `gameobject` g
 INNER JOIN `gameobject_template` gt
 	ON gt.`entry` = g.`id`
@@ -165,51 +139,50 @@ AND `Data0` IN (2, 8, 9, 10, 11, 18, 19, 20, 21, 22, 25, 26, 27, 29, 30, 31, 32,
               1121, 1122, 1123, 1124, 1632, 1639, 1641, 1642, 1643, 1644, 1645, 1646, 1649, 1650, 1651, 1652, 1782, 1783, 1784, 1785, 1786, 1787, 1788, 1789, 1790, 1791, 1792, 1793, 1800, 1860);
 
 -- Add Escort NPCs
-DELETE FROM `creature_group` WHERE `groupId` = 3;
-INSERT INTO `creature_group` (`groupId`, `creatureId`) VALUES
-(3, 10873),
-(3, 17874),
-(3, 40210),
-(3, 11348),
-(3, 93301),
-(3, 93194),
-(3, 19107),
-(3, 21692),
-(3, 21584),
-(3, 23229),
-(3, 24268),
-(3, 21594),
-(3, 14387),
-(3, 50381),
-(3, 15031),
-(3, 26987),
-(3, 29241),
-(3, 32333),
-(3, 33115),
-(3, 37085),
-(3, 41759),
-(3, 84459),
-(3, 78685),
-(3, 62090),
-(3, 72388),
-(3, 86832),
-(3, 67040),
-(3, 78781),
-(3, 65108),
-(3, 63688),
-(3, 59383),
-(3, 63625),
-(3, 70021),
-(3, 82071),
-(3, 117903),
-(3, 111075),
-(3, 101136),
-(3, 101303),
-(3, 122686),
-(3, 117065),
-(3, 202337),
-(3, 2017),
-(3, 132683);
+INSERT INTO `spawn_group` (`groupId`, `spawnType`, `spawnId`) VALUES
+(3, 0, 10873),
+(3, 0, 17874),
+(3, 0, 40210),
+(3, 0, 11348),
+(3, 0, 93301),
+(3, 0, 93194),
+(3, 0, 19107),
+(3, 0, 21692),
+(3, 0, 21584),
+(3, 0, 23229),
+(3, 0, 24268),
+(3, 0, 21594),
+(3, 0, 14387),
+(3, 0, 50381),
+(3, 0, 15031),
+(3, 0, 26987),
+(3, 0, 29241),
+(3, 0, 32333),
+(3, 0, 33115),
+(3, 0, 37085),
+(3, 0, 41759),
+(3, 0, 84459),
+(3, 0, 78685),
+(3, 0, 62090),
+(3, 0, 72388),
+(3, 0, 86832),
+(3, 0, 67040),
+(3, 0, 78781),
+(3, 0, 65108),
+(3, 0, 63688),
+(3, 0, 59383),
+(3, 0, 63625),
+(3, 0, 70021),
+(3, 0, 82071),
+(3, 0, 117903),
+(3, 0, 111075),
+(3, 0, 101136),
+(3, 0, 101303),
+(3, 0, 122686),
+(3, 0, 117065),
+(3, 0, 202337),
+(3, 0, 2017),
+(3, 0, 132683);
 
 
 -- Update trinity strings for various cs_list strings, to support showing spawn ID and guid.
@@ -232,7 +205,7 @@ WHERE `entry` = 1110;
 -- Add new trinity strings for extra npc/gobject info lines
 DELETE FROM `trinity_string` WHERE `entry` BETWEEN 5070 AND 5083;
 INSERT INTO `trinity_string` (`entry`, `content_default`) VALUES
-(5070, 'Spawn group: %u (Flags: %u, Active: %u)'),
+(5070, 'Spawn group: %s (ID: %u, Flags: %u, Active: %u)'),
 (5071, 'Compatibility Mode: %u'),
 (5072, 'GUID: %s'),
 (5073, 'SpawnID: %u, location (%f, %f, %f)'),

@@ -3050,14 +3050,14 @@ void Map::Respawn(RespawnInfo* info, bool force, SQLTransaction dbTrans)
             case SPAWN_TYPE_CREATURE:
             {
                 Creature* obj = new Creature();
-                if (!obj->LoadCreatureFromDB(spawnId, this))
+                if (!obj->LoadFromDB(spawnId, this))
                     delete obj;
                 break;
             }
             case SPAWN_TYPE_GAMEOBJECT:
             {
                 GameObject* obj = new GameObject();
-                if (!obj->LoadGameObjectFromDB(spawnId, this))
+                if (!obj->LoadFromDB(spawnId, this))
                     delete obj;
             }
             default:
@@ -3253,7 +3253,7 @@ void Map::ProcessDynamicModeRespawnScaling(uint32 zoneId, uint32 mode)
     uint32 const creatureMinimum = sWorld->getIntConfig(CONFIG_RESPAWN_DYNAMICMINIMUM_CREATURE);
     double const gameobjectAdjustFactor = std::min<float>(1.0f, sWorld->getFloatConfig(CONFIG_RESPAWN_DYNAMICRATE_GAMEOBJECT) / _zonePlayerCountMap[zoneId]);
     uint32 const gameobjectMinimum = sWorld->getIntConfig(CONFIG_RESPAWN_DYNAMICMINIMUM_GAMEOBJECT);
-    uint32 const okFlags = SPAWNGROUP_FLAG_DYNAMIC | (sWorld->getBoolConfig(CONFIG_RESPAWN_DYNAMIC_ESCORTNPC) ? SPAWNGROUP_FLAG_ESCORTQUESTNPC : 0);
+    uint32 const okFlags = SPAWNGROUP_FLAG_DYNAMIC_SPAWN_RATE | (sWorld->getBoolConfig(CONFIG_RESPAWN_DYNAMIC_ESCORTNPC) ? SPAWNGROUP_FLAG_ESCORTQUESTNPC : 0);
     
     if (creatureAdjustFactor >= 1.0 && gameobjectAdjustFactor >= 1.0) // nothing to do here
         return;
@@ -4109,7 +4109,7 @@ Creature* Map::GetCreature(ObjectGuid const& guid)
     return _objectsStore.Find<Creature>(guid);
 }
 
-Creature* Map::GetCreatureBySpawnId(ObjectGuid::LowType spawnId)
+Creature* Map::GetCreatureBySpawnId(ObjectGuid::LowType spawnId) const
 {
     auto const bounds = GetCreatureBySpawnIdStore().equal_range(spawnId);
     if (bounds.first == bounds.second)
@@ -4123,7 +4123,7 @@ Creature* Map::GetCreatureBySpawnId(ObjectGuid::LowType spawnId)
     return creatureItr != bounds.second ? creatureItr->second : bounds.first->second;
 }
 
-GameObject* Map::GetGameObjectBySpawnId(ObjectGuid::LowType spawnId)
+GameObject* Map::GetGameObjectBySpawnId(ObjectGuid::LowType spawnId) const
 {
     auto const bounds = GetGameObjectBySpawnIdStore().equal_range(spawnId);
     if (bounds.first == bounds.second)

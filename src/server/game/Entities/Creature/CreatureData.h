@@ -238,6 +238,7 @@ struct EquipmentInfo
 // from `creature` table
 struct CreatureData : public SpawnData
 {
+    CreatureData() : SpawnData(SPAWN_TYPE_CREATURE) { }
     uint32 displayid = 0;
     int8 equipmentId = 0;
     float spawndist = 0.0f;

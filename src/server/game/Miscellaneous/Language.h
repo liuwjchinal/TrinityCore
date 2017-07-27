@@ -1157,7 +1157,7 @@ enum TrinityStrings
     LANG_DEBUG_SCENE_OBJECT_LIST        = 5068,
     LANG_DEBUG_SCENE_OBJECT_DETAIL      = 5069, */
 
-    // Strings added for dynamic spawns
+    // Strings added for dynamic_spawning
     LANG_SPAWNINFO_GROUP_ID             = 5070,
     LANG_SPAWNINFO_COMPATIBILITY_MODE   = 5071,
     LANG_SPAWNINFO_GUIDINFO             = 5072,

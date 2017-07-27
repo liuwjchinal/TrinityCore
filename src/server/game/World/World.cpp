@@ -1703,14 +1703,11 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading Creature Base Stats...");
     sObjectMgr->LoadCreatureClassLevelStats();
 
-    TC_LOG_INFO("server.loading", "Loading Creature Group Templates...");
-    sObjectMgr->LoadCreatureGroupTemplates();
+    TC_LOG_INFO("server.loading", "Loading Spawn Group Templates...");
+    sObjectMgr->LoadSpawnGroupTemplates();
 
     TC_LOG_INFO("server.loading", "Loading Creature Data...");
     sObjectMgr->LoadCreatures();
-
-    TC_LOG_INFO("server.loading", "Loading Creature Group Data");
-    sObjectMgr->LoadCreatureGroups();
 
     TC_LOG_INFO("server.loading", "Loading Temporary Summon Data...");
     sObjectMgr->LoadTempSummons();                               // must be after LoadCreatureTemplates() and LoadGameObjectTemplates()
@@ -1724,17 +1721,14 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading Creature Addon Data...");
     sObjectMgr->LoadCreatureAddons();                            // must be after LoadCreatureTemplates() and LoadCreatures()
 
-    TC_LOG_INFO("server.loading", "Loading GameObject Group Templates...");
-    sObjectMgr->LoadGameObjectGroupTemplates();
-
     TC_LOG_INFO("server.loading", "Loading Gameobject Data...");
-    sObjectMgr->LoadGameobjects();
+    sObjectMgr->LoadGameObjects();
 
-    TC_LOG_INFO("server.loading", "Loading GameObject Group Data...");
-    sObjectMgr->LoadGameObjectGroups();
+    TC_LOG_INFO("server.loading", "Loading Spawn Group Data...");
+    sObjectMgr->LoadSpawnGroups();
 
     TC_LOG_INFO("server.loading", "Loading GameObject Addon Data...");
-    sObjectMgr->LoadGameObjectAddons();                          // must be after LoadGameObjectTemplate() and LoadGameobjects()
+    sObjectMgr->LoadGameObjectAddons();                          // must be after LoadGameObjectTemplate() and LoadGameObjects()
 
     TC_LOG_INFO("server.loading", "Loading GameObject Quest Items...");
     sObjectMgr->LoadGameObjectQuestItems();

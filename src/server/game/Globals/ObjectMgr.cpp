@@ -1782,6 +1782,7 @@ void ObjectMgr::LoadCreatures()
         }
 
         CreatureData& data = _creatureDataStore[guid];
+        data.spawnId        = guid;
         data.id             = entry;
         data.m_mapId        = fields[2].GetUInt16();
         data.displayid      = fields[3].GetUInt32();
@@ -1804,7 +1805,7 @@ void ObjectMgr::LoadCreatures()
         data.unit_flags     = fields[20].GetUInt32();
         data.dynamicflags   = fields[21].GetUInt32();
         data.scriptId       = GetScriptId(fields[22].GetString());
-        data.spawnGroupData = &_creatureGroupDataStore[0];
+        data.spawnGroupData = &_spawnGroupDataStore[0];
 
         MapEntry const* mapEntry = sMapStore.LookupEntry(data.GetMapId());
         if (!mapEntry)
@@ -1904,91 +1905,6 @@ void ObjectMgr::LoadCreatures()
     TC_LOG_INFO("server.loading", ">> Loaded " SZFMTD " creatures in %u ms", _creatureDataStore.size(), GetMSTimeDiffToNow(oldMSTime));
 }
 
-void ObjectMgr::LoadCreatureGroupTemplates()
-{
-    // Always create group 0, since it's used by default on all DB creatures
-    uint32 oldMSTime = getMSTime();
-    _creatureGroupDataStore[0].groupId = 0;
-    _creatureGroupDataStore[0].mapId = 0;
-    _creatureGroupDataStore[0].flags = SPAWNGROUP_FLAG_NONE;
-    _creatureGroupDataStore[0].isActive = true;
-
-    //                                               0        1          2
-    QueryResult result = WorldDatabase.Query("SELECT groupId, groupName, groupFlags FROM creature_group_template");
-
-    if (!result)
-    {
-        TC_LOG_ERROR("server.loading", ">> Loaded 0 creature group templates. DB table `creature_group_template` is empty.");
-        return;
-    }
-
-    do
-    {
-        Field* fields = result->Fetch();
-        _creatureGroupDataStore[fields[0].GetUInt32()].groupId = fields[0].GetUInt32();
-        _creatureGroupDataStore[fields[0].GetUInt32()].mapId = SPAWNGROUP_MAP_UNSET;
-        _creatureGroupDataStore[fields[0].GetUInt32()].flags = fields[2].GetUInt32();
-        _creatureGroupDataStore[fields[0].GetUInt32()].isActive = !(fields[2].GetUInt32() & SPAWNGROUP_FLAG_MANUAL_SPAWN);
-    } while (result->NextRow());
-
-    TC_LOG_INFO("server.loading", ">> Loaded " SZFMTD " creature group templates in %u ms", _creatureGroupDataStore.size(), GetMSTimeDiffToNow(oldMSTime));
-
-    return;
-}
-
-void ObjectMgr::LoadCreatureGroups()
-{
-    uint32 oldMSTime = getMSTime();
-    uint32 groupcount = 0;
-
-    //                                               0        1          2
-    QueryResult result = WorldDatabase.Query("SELECT groupId, creatureId FROM creature_group");
-
-    if (!result)
-    {
-        TC_LOG_ERROR("server.loading", ">> Loaded 0 creature groups. DB table `creature_group` is empty.");
-        return;
-    }
-
-    do
-    {
-        Field* fields = result->Fetch();
-        uint32 groupId = fields[0].GetUInt32();
-        ObjectGuid::LowType creatureId = fields[1].GetUInt32();
-
-        CreatureDataContainer::iterator cditr = _creatureDataStore.find(creatureId);
-        CreatureGroupDataContainer::iterator cgitr = _creatureGroupDataStore.find(groupId);
-        if (cditr == _creatureDataStore.end())
-        {
-            TC_LOG_ERROR("server.loading", "Creature %u in group %u not found in Creature Data!", creatureId, groupId);
-            continue;
-        }
-        else if(cgitr == _creatureGroupDataStore.end())
-        {
-            TC_LOG_ERROR("server.loading", "Creature group %u assigned to creature %u, but group is not found!", groupId, creatureId);
-            continue;
-        }
-
-        CreatureData* creaturedata = &cditr->second;
-        SpawnGroupTemplateData* groupTemplate = &cgitr->second;
-        if (groupTemplate->mapId == SPAWNGROUP_MAP_UNSET)
-        {
-            groupTemplate->mapId = creaturedata->GetMapId();
-        }
-        else if (groupTemplate->mapId != creaturedata->GetMapId() && groupId > SPAWNGROUP_MAX_SYSTEMGROUPID)
-        {
-            TC_LOG_ERROR("server.loading", "Creature group %u has map ID %u, but creature %u has map id %u. Creature NOT added to group!", groupId, groupTemplate->mapId, creatureId, creaturedata->GetMapId());
-            continue;
-        }
-
-        creaturedata->spawnGroupData = groupTemplate;
-        _creatureGroupMapStore.insert(std::pair<uint32, ObjectGuid::LowType>(groupId, creatureId));
-        groupcount++;
-    } while (result->NextRow());
-
-    TC_LOG_INFO("server.loading", ">> Loaded %u creature groups in %u ms", groupcount, GetMSTimeDiffToNow(oldMSTime));
-}
-
 void ObjectMgr::AddCreatureToGrid(ObjectGuid::LowType guid, CreatureData const* data)
 {
     uint8 mask = data->spawnMask;
@@ -2030,6 +1946,7 @@ ObjectGuid::LowType ObjectMgr::AddGameObjectData(uint32 entry, uint32 mapId, Pos
     ObjectGuid::LowType guid = GenerateGameObjectSpawnId();
 
     GameObjectData& data = NewOrExistGameObjectData(guid);
+    data.spawnId        = guid;
     data.id             = entry;
     data.m_mapId        = mapId;
 
@@ -2050,7 +1967,7 @@ ObjectGuid::LowType ObjectMgr::AddGameObjectData(uint32 entry, uint32 mapId, Pos
     if (!map->Instanceable() && map->IsGridLoaded(data.GetPositionX(), data.GetPositionY()))
     {
         GameObject* go = new GameObject;
-        if (!go->LoadGameObjectFromDB(guid, map))
+        if (!go->LoadFromDB(guid, map))
         {
             TC_LOG_ERROR("misc", "AddGameObjectData: cannot add gameobject entry %u to map", entry);
             delete go;
@@ -2078,6 +1995,7 @@ ObjectGuid::LowType ObjectMgr::AddCreatureData(uint32 entry, uint32 mapId, Posit
 
     ObjectGuid::LowType guid = GenerateCreatureSpawnId();
     CreatureData& data = NewOrExistCreatureData(guid);
+    data.spawnId = guid;
     data.id = entry;
     data.m_mapId = mapId;
     data.displayid = 0;
@@ -2103,7 +2021,7 @@ ObjectGuid::LowType ObjectMgr::AddCreatureData(uint32 entry, uint32 mapId, Posit
     if (!map->Instanceable() && !map->IsRemovalGrid(data.GetPositionX(), data.GetPositionY()))
     {
         Creature* creature = new Creature();
-        if (!creature->LoadCreatureFromDB(guid, map))
+        if (!creature->LoadFromDB(guid, map))
         {
             TC_LOG_ERROR("misc", "AddCreature: Cannot add creature entry %u to map", entry);
             delete creature;
@@ -2114,7 +2032,7 @@ ObjectGuid::LowType ObjectMgr::AddCreatureData(uint32 entry, uint32 mapId, Posit
     return guid;
 }
 
-void ObjectMgr::LoadGameobjects()
+void ObjectMgr::LoadGameObjects()
 {
     uint32 oldMSTime = getMSTime();
 
@@ -2178,6 +2096,7 @@ void ObjectMgr::LoadGameobjects()
 
         GameObjectData& data = _gameObjectDataStore[guid];
 
+        data.spawnId        = guid;
         data.id             = entry;
         data.m_mapId        = fields[2].GetUInt16();
         data.m_positionX    = fields[3].GetFloat();
@@ -2189,7 +2108,7 @@ void ObjectMgr::LoadGameobjects()
         data.rotation.z     = fields[9].GetFloat();
         data.rotation.w     = fields[10].GetFloat();
         data.spawntimesecs  = fields[11].GetInt32();
-        data.spawnGroupData = &_gameObjectGroupDataStore[0];
+        data.spawnGroupData = &_spawnGroupDataStore[0];
 
         MapEntry const* mapEntry = sMapStore.LookupEntry(data.GetMapId());
         if (!mapEntry)
@@ -2284,47 +2203,64 @@ void ObjectMgr::LoadGameobjects()
     TC_LOG_INFO("server.loading", ">> Loaded " SZFMTD " gameobjects in %u ms", _gameObjectDataStore.size(), GetMSTimeDiffToNow(oldMSTime));
 }
 
-void ObjectMgr::LoadGameObjectGroupTemplates()
+void ObjectMgr::LoadSpawnGroupTemplates()
 {
     uint32 oldMSTime = getMSTime();
-    _gameObjectGroupDataStore[0].groupId = 0;
-    _gameObjectGroupDataStore[0].mapId = 0;
-    _gameObjectGroupDataStore[0].flags = SPAWNGROUP_FLAG_NONE;
 
     //                                               0        1          2
-    QueryResult result = WorldDatabase.Query("SELECT groupId, groupName, groupFlags FROM gameobject_group_template");
+    QueryResult result = WorldDatabase.Query("SELECT groupId, groupName, groupFlags FROM spawn_group_template");
 
-    if (!result)
+    if (result)
     {
-        TC_LOG_ERROR("server.loading", ">> Loaded 0 gameobject group templates. DB table `gameobject_group_template` is empty.");
-        return;
+        do
+        {
+            Field* fields = result->Fetch();
+            uint32 groupId = fields[0].GetUInt32();
+            SpawnGroupTemplateData& group = _spawnGroupDataStore[groupId];
+            group.groupId = groupId;
+            group.name = fields[1].GetString();
+            group.mapId = SPAWNGROUP_MAP_UNSET;
+            uint32 flags = fields[2].GetUInt32();
+            if (flags & ~SPAWNGROUP_FLAGS_ALL)
+            {
+                group.flags = SpawnGroupFlags(flags & SPAWNGROUP_FLAGS_ALL);
+                TC_LOG_ERROR("server.loading", "Invalid spawn group flag %u on group ID %u (%s), reduced to valid flag %u.", flags, groupId, group.name.c_str(), uint32(group.flags));
+            }
+            else
+                group.flags = SpawnGroupFlags(flags);
+            group.isActive = !(group.flags & SPAWNGROUP_FLAG_MANUAL_SPAWN);
+        } while (result->NextRow());
+    }
+    
+    if (_spawnGroupDataStore.find(0) == _spawnGroupDataStore.end())
+    {
+        TC_LOG_ERROR("server.loading", "Default spawn group (index 0) is missing from DB! Manually inserted.");
+        SpawnGroupTemplateData& data = _spawnGroupDataStore[0];
+        data.groupId = 0;
+        data.name = "Default Group";
+        data.mapId = 0;
+        data.flags = SPAWNGROUP_FLAG_SYSTEM;
+        data.isActive = true;
     }
 
-    do
-    {
-        Field* fields = result->Fetch();
-        _gameObjectGroupDataStore[fields[0].GetUInt32()].groupId = fields[0].GetUInt32();
-        _gameObjectGroupDataStore[fields[0].GetUInt32()].mapId = SPAWNGROUP_MAP_UNSET;
-        _gameObjectGroupDataStore[fields[0].GetUInt32()].flags = fields[2].GetUInt32();
-        _gameObjectGroupDataStore[fields[0].GetUInt32()].isActive = !(fields[2].GetUInt32() & SPAWNGROUP_FLAG_MANUAL_SPAWN);
-    } while (result->NextRow());
-
-    TC_LOG_INFO("server.loading", ">> Loaded " SZFMTD " gameobject group templates in %u ms", _gameObjectGroupDataStore.size(), GetMSTimeDiffToNow(oldMSTime));
+    if (result)
+        TC_LOG_INFO("server.loading", ">> Loaded " SZFMTD " spawn group templates in %u ms", _spawnGroupDataStore.size(), GetMSTimeDiffToNow(oldMSTime));
+    else
+        TC_LOG_ERROR("server.loading", ">> Loaded 0 spawn group templates. DB table `spawn_group_template` is empty.");
 
     return;
 }
 
-void ObjectMgr::LoadGameObjectGroups()
+void ObjectMgr::LoadSpawnGroups()
 {
     uint32 oldMSTime = getMSTime();
-    uint32 groupcount = 0;
 
     //                                               0        1          2
-    QueryResult result = WorldDatabase.Query("SELECT groupId, gameobjectId FROM gameobject_group");
+    QueryResult result = WorldDatabase.Query("SELECT groupId, spawnType, spawnId FROM spawn_group");
 
     if (!result)
     {
-        TC_LOG_ERROR("server.loading", ">> Loaded 0 gameobject groups. DB table `gameobject_group` is empty.");
+        TC_LOG_ERROR("server.loading", ">> Loaded 0 spawn group members. DB table `spawn_group` is empty.");
         return;
     }
 
@@ -2332,38 +2268,46 @@ void ObjectMgr::LoadGameObjectGroups()
     {
         Field* fields = result->Fetch();
         uint32 groupId = fields[0].GetUInt32();
-        ObjectGuid::LowType gameobjectId = fields[1].GetUInt32();
-
-        GameObjectDataContainer::iterator gditr = _gameObjectDataStore.find(gameobjectId);
-        GameObjectGroupDataContainer::iterator ggitr = _gameObjectGroupDataStore.find(groupId);
-        if (gditr == _gameObjectDataStore.end())
+        SpawnObjectType spawnType;
         {
-            TC_LOG_ERROR("server.loading", "GameObject %u in group %u not found in GameObject Data!", gameobjectId, groupId);
+            uint32 type = fields[1].GetUInt8();
+            if (type >= SPAWN_TYPE_MAX)
+            {
+                TC_LOG_ERROR("server.loading", "Spawn data with invalid type %u listed for spawn group %u. Skipped.", type, groupId);
+                continue;
+            }
+            spawnType = SpawnObjectType(type);
+        }
+        ObjectGuid::LowType spawnId = fields[2].GetUInt32();
+
+        SpawnData const* data = GetSpawnData(spawnType, spawnId);
+        auto it = _spawnGroupDataStore.find(groupId);
+        if (!data)
+        {
+            TC_LOG_ERROR("server.loading", "Spawn data with ID (%u,%u) not found, but is listed as a member of spawn group %u!", uint32(spawnType), spawnId, groupId);
             continue;
         }
-        else if (ggitr == _gameObjectGroupDataStore.end())
+        else if (it == _spawnGroupDataStore.end())
         {
-            TC_LOG_ERROR("server.loading", "GameObject group %u assigned to GameObject %u, but group is found!", groupId, gameobjectId);
+            TC_LOG_ERROR("server.loading", "Spawn group %u assigned to spawn ID (%u,%u), but group is found!", groupId, uint32(spawnType), spawnId);
             continue;
         }
         else
         {
-            GameObjectData* godata = &gditr->second;
-            SpawnGroupTemplateData* groupTemplate = &ggitr->second;
-            if (groupTemplate->mapId == SPAWNGROUP_MAP_UNSET)
-                groupTemplate->mapId = godata->GetMapId();
-            else if (groupTemplate->mapId != godata->GetMapId() && groupId > SPAWNGROUP_MAX_SYSTEMGROUPID)
+            SpawnGroupTemplateData& groupTemplate = it->second;
+            if (groupTemplate.mapId == SPAWNGROUP_MAP_UNSET)
+                groupTemplate.mapId = data->GetMapId();
+            else if (groupTemplate.mapId != data->GetMapId() && !(groupTemplate.flags & SPAWNGROUP_FLAG_SYSTEM))
             {
-                TC_LOG_ERROR("server.loading", "GameObject group %u has map ID %u, but GameObject %u has map id %u. GameObject NOT added to group!", groupId, groupTemplate->mapId, gameobjectId, godata->GetMapId());
+                TC_LOG_ERROR("server.loading", "Spawn group %u has map ID %u, but spawn (%u,%u) has map id %u - spawn NOT added to group!", groupId, groupTemplate.mapId, uint32(spawnType), spawnId, data->GetMapId());
                 continue;
             }
-            godata->spawnGroupData = &_gameObjectGroupDataStore[groupId];
-            _gameObjectGroupMapStore.insert(std::pair<uint32, ObjectGuid::LowType>(groupId, gameobjectId));
-            groupcount++;
+            const_cast<SpawnData*>(data)->spawnGroupData = &groupTemplate;
+            _spawnGroupMapStore.emplace(groupId, data);
         }
     } while (result->NextRow());
 
-    TC_LOG_INFO("server.loading", ">> Loaded %u gameobject groups in %u ms", groupcount, GetMSTimeDiffToNow(oldMSTime));
+    TC_LOG_INFO("server.loading", ">> Loaded %u spawn group members in %u ms", _spawnGroupMapStore.size(), GetMSTimeDiffToNow(oldMSTime));
 }
 
 
@@ -6748,218 +6692,129 @@ uint32 ObjectMgr::GenerateGameObjectSpawnId()
     return _gameObjectSpawnId++;
 }
 
-bool ObjectMgr::SpawnCreatureGroup(uint32 groupId, Map* map, bool ignoreRespawn, bool force, std::vector<ObjectGuid>* creatureList)
+bool ObjectMgr::SpawnGroupSpawn(uint32 groupId, Map* map, bool ignoreRespawn, bool force, std::vector<WorldObject*>* spawnedObjects)
 {
-    CreatureGroupDataContainer::const_iterator itr = _creatureGroupDataStore.find(groupId);
-    // No spawning/despawning default groups (0x00-0xFF) or non existent group
-    if (groupId <= SPAWNGROUP_MAX_SYSTEMGROUPID || itr == _creatureGroupDataStore.end())
+    auto itr = _spawnGroupDataStore.find(groupId);
+    if (itr == _spawnGroupDataStore.end() || itr->second.flags & SPAWNGROUP_FLAG_SYSTEM)
+    {
+        TC_LOG_ERROR("maps", "Tried to despawn non-existing (or system) spawn group %u. Blocked.", groupId);
         return false;
-
-    std::vector<ObjectGuid::LowType> spawnList;
-    
-    if (!GetCreaturesInGroup(groupId, spawnList))
-        return false;
+    }
 
     if (!map)
     {
-        TC_LOG_ERROR("maps", "Tried to spawn creature group %u, but supplied map not found", groupId);
+        TC_LOG_ERROR("maps", "Tried to despawn creature group %u, but no map was supplied. Blocked.", groupId);
         return false;
     }
-    
+
     if (itr->second.mapId != map->GetId())
     {
-        TC_LOG_ERROR("maps", "Tried to spawn creature group %u, but supplied map is %u, creature group has map %u", groupId, map->GetId(), itr->second.mapId);
+        TC_LOG_ERROR("maps", "Tried to despawn creature group %u, but supplied map is %u, creature group has map %u. Blocked.", groupId, map->GetId(), itr->second.mapId);
         return false;
     }
 
-    for (ObjectGuid::LowType guid : spawnList)
+    for (auto& pair : GetSpawnDataForGroup(groupId))
     {
-        if (CreatureData const* cdata = GetCreatureData(guid))
+        SpawnData const* data = pair.second;
+        ASSERT(itr->second.mapId == data->GetMapId());
+        // Check if there's already an instance spawned
+        if (!force)
+            if (WorldObject* obj = map->GetWorldObjectBySpawnId(data->type, data->spawnId))
+                if ((data->type != SPAWN_TYPE_CREATURE) || obj->ToCreature()->IsAlive())
+                    continue;
+
+        time_t respawnTime = map->GetRespawnTime(data->type, data->spawnId);
+        if (respawnTime && respawnTime > time(NULL))
         {
-            ASSERT(itr->second.mapId == cdata->GetMapId());
+            if (!ignoreRespawn)
+                continue;
 
-            if (!map->GetCreatureBySpawnId(guid) || !map->GetCreatureBySpawnId(guid)->IsAlive() || force)
+            // we need to remove the respawn time, otherwise we'd end up double spawning
+            map->RemoveRespawnTime(data->type, data->spawnId);
+        }
+
+        // Everything OK, now do the actual (re)spawn
+        switch (data->type)
+        {
+            case SPAWN_TYPE_CREATURE:
             {
-                if (ignoreRespawn)
-                {
-                    // If ignoring respawn timer we need to delete here, else creature will be added invisible and awaiting old style respawn
-                    map->RemoveRespawnTime(SPAWN_TYPE_CREATURE, guid);
-                }
-                else
-                {
-                    // If not due to respawn, ignore this one
-                    time_t respawnTime = map->GetCreatureRespawnTime(guid);
-                    if (respawnTime > time(NULL))
-                        continue;
-                }
-
-                Creature* newcreature = new Creature();
-                if (!newcreature->LoadCreatureFromDB(guid, map, true, force))
-                    delete newcreature;
-                else if (creatureList)
-                    creatureList->push_back(newcreature->GetGUID());
-
-                map->RemoveRespawnTime(SPAWN_TYPE_CREATURE, guid);
+                Creature* creature = new Creature();
+                if (!creature->LoadFromDB(data->spawnId, map, true, force))
+                    delete creature;
+                else if (spawnedObjects)
+                    spawnedObjects->push_back(creature);
+                break;
             }
+            case SPAWN_TYPE_GAMEOBJECT:
+            {
+                GameObject* gameobject = new GameObject();
+                if (!gameobject->LoadFromDB(data->spawnId, map, true))
+                    delete gameobject;
+                else if (spawnedObjects)
+                    spawnedObjects->push_back(gameobject);
+                break;
+            }
+            default:
+                ASSERT(false, "Invalid spawn type %u with spawnId %u", uint32(data->type), data->spawnId);
+                return false;
         }
     }
-    _creatureGroupDataStore[groupId].isActive = true;
+    itr->second.isActive = true; // start processing respawns for the group
     return true;
 }
 
-bool ObjectMgr::DespawnCreatureGroup(uint32 groupId, Map* map, bool deleteRespawnTimes)
+bool ObjectMgr::SpawnGroupDespawn(uint32 groupId, Map* map, bool deleteRespawnTimes)
 {
-    CreatureGroupDataContainer::const_iterator itr = _creatureGroupDataStore.find(groupId);
-    // No spawning/despawning default groups (0x00-0xFF) or non existent group
-    if (groupId <= SPAWNGROUP_MAX_SYSTEMGROUPID || itr == _creatureGroupDataStore.end())
+    auto itr = _spawnGroupDataStore.find(groupId);
+    if (itr == _spawnGroupDataStore.end() || itr->second.flags & SPAWNGROUP_FLAG_SYSTEM)
+    {
+        TC_LOG_ERROR("maps", "Tried to despawn non-existing (or system) spawn group %u. Blocked.", groupId);
         return false;
-
-    std::vector<ObjectGuid::LowType> creaturelist;
-    if (!GetCreaturesInGroup(groupId, creaturelist))
-        return false;
+    }
 
     if (!map)
     {
-        TC_LOG_ERROR("maps", "Tried to despawn creature group %u, but supplied map not found", groupId);
+        TC_LOG_ERROR("maps", "Tried to despawn creature group %u, but no map was supplied. Blocked.", groupId);
         return false;
     }
 
     if (itr->second.mapId != map->GetId())
     {
-        TC_LOG_ERROR("maps", "Tried to spawn creature group %u, but supplied map is %u, creature group has map %u", groupId, map->GetId(), itr->second.mapId);
+        TC_LOG_ERROR("maps", "Tried to despawn creature group %u, but supplied map is %u, creature group has map %u. Blocked.", groupId, map->GetId(), itr->second.mapId);
         return false;
     }
 
-    for (ObjectGuid::LowType guid : creaturelist)
+    std::vector<WorldObject*> toUnload; // unload after iterating, otherwise iterator invalidation
+    for (auto const& pair : GetSpawnDataForGroup(groupId))
     {
-        std::vector<Creature*> unloadList;
-        // Find all instances of this spawnId
-        auto bounds = map->GetCreatureBySpawnIdStore().equal_range(guid);
-        if (bounds.first != bounds.second)
+        SpawnData const* data = pair.second;
+        if (deleteRespawnTimes)
+            map->RemoveRespawnTime(data->type, data->spawnId);
+        switch (data->type)
         {
-            // Defer creatures to unload. If we delete here itr can be invalidated
-            for (auto itr = bounds.first; itr != bounds.second; ++itr)
+            case SPAWN_TYPE_CREATURE:
             {
-                if (deleteRespawnTimes)
-                    map->RemoveRespawnTime(SPAWN_TYPE_CREATURE, itr->second->GetSpawnId());
-
-                unloadList.push_back(itr->second);
+                auto bounds = map->GetCreatureBySpawnIdStore().equal_range(data->spawnId);
+                for (auto it = bounds.first; it != bounds.second; ++it)
+                    toUnload.emplace_back(it->second);
+                break;
             }
-
-            // Delete deferred creatures
-            for (Creature* unloadCreature : unloadList)
-                unloadCreature->AddObjectToRemoveList();
+            case SPAWN_TYPE_GAMEOBJECT:
+            {
+                auto bounds = map->GetGameObjectBySpawnIdStore().equal_range(data->spawnId);
+                for (auto it = bounds.first; it != bounds.second; ++it)
+                    toUnload.emplace_back(it->second);
+                break;
+            }
+            default:
+                ASSERT(false, "Invalid spawn type %u in spawn data with spawnId %u.", uint32(data->type), data->spawnId);
+                return false;
         }
     }
-    _creatureGroupDataStore[groupId].isActive = false;
-    return true;
-}
-
-bool ObjectMgr::SpawnGOGroup(uint32 groupId, Map* map, bool ignoreRespawn, bool force, std::vector<ObjectGuid>* gameobjectList)
-{
-    GameObjectGroupDataContainer::const_iterator itr = _gameObjectGroupDataStore.find(groupId);
-    // No spawning/despawning default groups (0x00-0xFF) or non existent group
-    if (groupId <= SPAWNGROUP_MAX_SYSTEMGROUPID || itr == _gameObjectGroupDataStore.end())
-        return false;
-
-    std::vector<ObjectGuid::LowType> golist;
-    
-    if (!GetGameObjectsInGroup(groupId, golist))
-        return false;
-
-    if (!map)
-    {
-        TC_LOG_ERROR("maps", "Tried to spawn gameobject group %u, supplied map not found", groupId);
-        return false;
-    }
-
-    if (itr->second.mapId != map->GetId())
-    {
-        TC_LOG_ERROR("maps", "Tried to spawn gameobject group %u, but supplied map is %u, gameobject group has map %u", groupId, map->GetId(), itr->second.mapId);
-        return false;
-    }
-
-    for (ObjectGuid::LowType guid : golist)
-    {
-        if (GameObjectData const* godata = GetGameObjectData(guid))
-        {
-            ASSERT(itr->second.mapId == godata->GetMapId());
-
-            if (!map->GetGameObjectBySpawnId(guid) || force)
-            {
-                if (ignoreRespawn)
-                {
-                    // If ignoring respawn timer we need to delete here
-                    map->RemoveRespawnTime(SPAWN_TYPE_GAMEOBJECT, guid);
-                }
-                else
-                {
-                    // If not due to respawn, ignore this one
-                    time_t respawnTime = map->GetGORespawnTime(guid);
-                    if (respawnTime > time(NULL))
-                        continue;
-                }
-
-                GameObject* newgo = new GameObject();
-                if (!newgo->LoadGameObjectFromDB(guid, map, true))
-                    delete newgo;
-                else if (gameobjectList)
-                    gameobjectList->push_back(newgo->GetGUID());
-
-                map->RemoveRespawnTime(SPAWN_TYPE_GAMEOBJECT, guid);
-            }
-        }
-    }
-    _gameObjectGroupDataStore[groupId].isActive = true;
-    return true;
-}
-
-bool ObjectMgr::DespawnGOGroup(uint32 groupId, Map* map, bool deleteRespawnTimes)
-{
-    GameObjectGroupDataContainer::const_iterator itr = _gameObjectGroupDataStore.find(groupId);
-    // No spawning/despawning default groups (0x00-0xFF) or non existent group
-    if (groupId <= SPAWNGROUP_MAX_SYSTEMGROUPID || itr == _gameObjectGroupDataStore.end())
-        return false;
-
-    std::vector<ObjectGuid::LowType> golist;
-    
-    if (!GetGameObjectsInGroup(groupId, golist))
-        return false;
-
-    if (!map)
-    {
-        TC_LOG_ERROR("maps", "Tried to despawn gameobject group %u, but supplied map was not found", groupId);
-        return false;
-    }
-
-    if (itr->second.mapId != map->GetId())
-    {
-        TC_LOG_ERROR("maps", "Tried to despawn gameobject group %u, but supplied map is %u, gameobject group has map %u", groupId, map->GetId(), itr->second.mapId);
-        return false;
-    }
-
-    for (ObjectGuid::LowType guid : golist)
-    {
-        std::vector<GameObject*> unloadList;
-        // Find all instances of this spawnId
-        auto bounds = map->GetGameObjectBySpawnIdStore().equal_range(guid);
-        if (bounds.first != bounds.second)
-        {
-            // Defer gameobjects to unload. If we delete here itr can be invalidated
-            for (auto itr = bounds.first; itr != bounds.second; ++itr)
-            {
-                if (deleteRespawnTimes)
-                    map->RemoveRespawnTime(SPAWN_TYPE_GAMEOBJECT, itr->second->GetSpawnId());
-
-                unloadList.push_back(itr->second);
-            }
-
-            // Delete deferred gameobjects
-            for (GameObject* unloadGameObject : unloadList)
-                unloadGameObject->AddObjectToRemoveList();
-        }
-    }
-    _gameObjectGroupDataStore[groupId].isActive = false;
+    // now do the actual despawning
+    for (WorldObject* obj : toUnload)
+        obj->AddObjectToRemoveList();
+    itr->second.isActive = false; // stop processing respawns for the group, too
     return true;
 }
 
@@ -9600,24 +9455,6 @@ CreatureTemplate const* ObjectMgr::GetCreatureTemplate(uint32 entry) const
         return &(itr->second);
 
     return nullptr;
-}
-
-uint32 ObjectMgr::GetCreaturesInGroup(uint32 groupid, std::vector<ObjectGuid::LowType>& creatureList)
-{
-    auto groupBounds = _creatureGroupMapStore.equal_range(groupid);
-    for (auto itr = groupBounds.first; itr != groupBounds.second; ++itr)
-        creatureList.push_back(itr->second);
-
-    return creatureList.size();
-}
-
-uint32 ObjectMgr::GetGameObjectsInGroup(uint32 groupid, std::vector<ObjectGuid::LowType>& gameobjectList)
-{
-    auto groupBounds = _gameObjectGroupMapStore.equal_range(groupid);
-    for (auto itr = groupBounds.first; itr != groupBounds.second; ++itr)
-        gameobjectList.push_back(itr->second);
-
-    return gameobjectList.size();
 }
 
 VehicleAccessoryList const* ObjectMgr::GetVehicleAccessoryList(Vehicle* veh) const

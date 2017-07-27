@@ -1727,8 +1727,8 @@ Respawn.MinCheckIntervalMS = 5000
 #
 #    Respawn.DynamicMode
 #        Description: Select which mode (if any) should be used to adjust respawn of creatures.
-#                     Only creatures in a group which has the flag set for dynamic respawn will be
-#                     considered.
+#                     This will only affect creatures that have dynamic spawn rate scaling enabled in
+#                     the spawn group table (by default, gathering nodes and quest targets with respawn time <30min
 #                     1 - Use number of players in zone
 #        Default:     0 - No dynamic respawn function
 

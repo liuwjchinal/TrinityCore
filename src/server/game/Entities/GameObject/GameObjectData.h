@@ -597,6 +597,7 @@ struct GameObjectAddon
 // `gameobject` table
 struct GameObjectData : public SpawnData
 {
+    GameObjectData() : SpawnData(SPAWN_TYPE_GAMEOBJECT) { }
     QuaternionData rotation;
     uint32 animprogress = 0;
     GOState goState = GO_STATE_ACTIVE;

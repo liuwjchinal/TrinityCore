@@ -113,8 +113,7 @@ class TC_GAME_API GameObject : public WorldObject, public GridObject<GameObject>
 
         void SaveToDB();
         void SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask);
-        bool LoadFromDB(ObjectGuid::LowType spawnId, Map* map) { return LoadGameObjectFromDB(spawnId, map, false); }
-        bool LoadGameObjectFromDB(ObjectGuid::LowType spawnId, Map* map, bool addToMap = true);
+        bool LoadFromDB(ObjectGuid::LowType spawnId, Map* map, bool addToMap = true);
         void DeleteFromDB();
 
         void SetOwnerGUID(ObjectGuid owner)
