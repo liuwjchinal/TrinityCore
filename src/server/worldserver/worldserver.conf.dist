@@ -1718,32 +1718,10 @@ Creature.MovingStopTimeForPlayer = 180000
 # SPAWN/RESPAWN SETTINGS
 #
 #    Respawn.MinCheckIntervalMS
-#        Description: Minimum time that needs to pass between respawn checks for any given zone.
-#                     The actual time may be longer if there are no active objects in the zone.
+#        Description: Minimum time that needs to pass between respawn checks for any given map.
 #        Default:     5000 - 5 seconds
 
 Respawn.MinCheckIntervalMS = 5000
-
-#
-#    Respawn.DynamicMode
-#        Description: Select which mode (if any) should be used to adjust respawn of creatures.
-#                     This will only affect creatures that have dynamic spawn rate scaling enabled in
-#                     the spawn group table (by default, gathering nodes and quest targets with respawn time <30min
-#                     1 - Use number of players in zone
-#        Default:     0 - No dynamic respawn function
-
-Respawn.DynamicMode = 0
-
-#
-#    Respawn.DynamicEscortNPC
-#        Description: This switch enabled or disabled the dynamic respawn function for Escort quest NPCs 
-#                     that are also quest givers, and not in instancable maps (base maps only).
-#                     This will cause the respawn timer to begin when an escort event begins.
-#                     Also, these NPC will apply the dynamic respawn function specified above.
-#        Default:     1 - Enabled
-#                     0 - Disabled
-
-Respawn.DynamicEscortNPC = 1
 
 #
 #    Respawn.GuidWarnLevel
@@ -1796,6 +1774,27 @@ Respawn.AlertRestartReason = "Urgent Maintenance"
 #        Default:     3 - 3am
 
 Respawn.RestartQuietTime = 3
+
+#
+#    Respawn.DynamicMode
+#        Description: Select which mode (if any) should be used to adjust respawn of creatures.
+#                     This will only affect creatures that have dynamic spawn rate scaling enabled in
+#                     the spawn group table (by default, gathering nodes and quest targets with respawn time <30min
+#                     1 - Use number of players in zone
+#        Default:     0 - No dynamic respawn function
+
+Respawn.DynamicMode = 0
+
+#
+#    Respawn.DynamicEscortNPC
+#        Description: This switch enabled or disabled the dynamic respawn function for Escort quest NPCs 
+#                     that are also quest givers, and not in instancable maps (base maps only).
+#                     This will cause the respawn timer to begin when an escort event begins.
+#                     Also, these NPC will apply the dynamic respawn function specified above.
+#        Default:     1 - Enabled
+#                     0 - Disabled
+
+Respawn.DynamicEscortNPC = 1
 
 #
 #    Respawn.DynamicRateCreature
