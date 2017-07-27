@@ -533,17 +533,25 @@ bool Map::EnsureGridLoaded(Cell const& cell)
 
 void Map::GridMarkNoUnload(uint32 x, uint32 y)
 {
-    _gridNoUnload.insert(GridCoord(x, y).GetId());
-
+    // First make sure this grid is loaded
     float gX = ((float(x) - 0.5f - CENTER_GRID_ID) * SIZE_OF_GRIDS) + (CENTER_GRID_OFFSET * 2);
     float gY = ((float(y) - 0.5f - CENTER_GRID_ID) * SIZE_OF_GRIDS) + (CENTER_GRID_OFFSET * 2);
     Cell cell = Cell(gX, gY);
     EnsureGridLoaded(cell);
+
+    // Mark as don't unload
+    NGridType* grid = getNGrid(x, y);
+    grid->setUnloadExplicitLock(true);
 }
 
 void Map::GridUnmarkNoUnload(uint32 x, uint32 y)
 {
-    _gridNoUnload.erase(GridCoord(x, y).GetId());
+    // If grid is loaded, clear unload lock
+    if (IsGridLoaded(GridCoord(x, y)))
+    {
+        NGridType* grid = getNGrid(x, y);
+        grid->setUnloadExplicitLock(false);
+    }
 }
 
 void Map::LoadGrid(float x, float y)
@@ -1622,13 +1630,6 @@ bool Map::UnloadGrid(NGridType& ngrid, bool unloadAll)
     const uint32 y = ngrid.getY();
 
     {
-        // Don't unload blocked grid
-        if (_gridNoUnload.find(GridCoord(x, y).GetId()) != _gridNoUnload.end())
-        {
-            ngrid.ResetTimeTracker(i_gridExpiry);
-            return false;
-        }
-
         if (!unloadAll)
         {
             //pets, possessed creatures (must be active), transport passengers

@@ -807,8 +807,6 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         std::unordered_map<uint32, uint32> _zoneLastRespawnedTimeMap;
         std::unordered_map<uint32, uint32> _zonePlayerCountMap;
 
-        std::unordered_set<uint32> _gridNoUnload;
-
         ZoneDynamicInfoMap _zoneDynamicInfo;
         uint32 _defaultLight;
 
