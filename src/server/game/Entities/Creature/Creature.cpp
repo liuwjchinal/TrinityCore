@@ -615,8 +615,8 @@ void Creature::Update(uint32 diff)
                 else                                // the master is dead
                 {
                     ObjectGuid targetGuid = sObjectMgr->GetLinkedRespawnGuid(dbtableHighGuid);
-                    if (targetGuid == dbtableHighGuid) // if linking self, never respawn (check delayed to next day)
-                        SetRespawnTime(DAY);
+                    if (targetGuid == dbtableHighGuid) // if linking self, never respawn
+                        SetRespawnTime(WEEK);
                     else
                     {
                         // else copy time from master and add a little
@@ -1760,23 +1760,23 @@ void Creature::setDeathState(DeathState s)
     {
         m_corpseRemoveTime = time(nullptr) + m_corpseDelay;
 
-        // @ToDo: Note about this boss change and dynspawns.
-        // I could do the same here, and save the respawn. My fear is that
-        // Giving a huge respawn time and saving to the database is a bad idea map+instance can be reused 
-        // and sooner than you might think. I don't know how this event is handled.
+        uint32 respawnDelay = m_respawnDelay;
+        if (uint32 scalingMode = sWorld->getIntConfig(CONFIG_RESPAWN_DYNAMICMODE))
+            GetMap()->ApplyDynamicModeRespawnScaling(this, m_spawnId, respawnDelay, scalingMode);
+        // @todo remove the boss respawn time hack in a dynspawn follow-up once we have creature groups in instances
         if (m_respawnCompatibilityMode)
         {
             if (IsDungeonBoss() && !m_respawnDelay)
                 m_respawnTime = std::numeric_limits<time_t>::max(); // never respawn in this instance
             else
-                m_respawnTime = time(nullptr) + m_respawnDelay + m_corpseDelay;
+                m_respawnTime = time(nullptr) + respawnDelay + m_corpseDelay;
         }
         else
         {
             if (IsDungeonBoss() && !m_respawnDelay)
                 m_respawnTime = std::numeric_limits<time_t>::max(); // never respawn in this instance
             else
-                m_respawnTime = time(nullptr) + m_respawnDelay;
+                m_respawnTime = time(nullptr) + respawnDelay;
         }
 
         // always save boss respawn time at death to prevent crash cheating
@@ -1933,21 +1933,21 @@ void Creature::ForcedDespawn(uint32 timeMSToDespawn, Seconds const& forceRespawn
         // do it before killing creature
         DestroyForNearbyPlayers();
 
-        bool overrideRespawnTime = true;
+        bool overrideRespawnTime = false;
         if (IsAlive())
         {
             if (forceRespawnTimer > Seconds::zero())
             {
                 SetCorpseDelay(0);
                 SetRespawnDelay(forceRespawnTimer.count());
-                overrideRespawnTime = false;
+                overrideRespawnTime = true;
             }
 
             setDeathState(JUST_DIED);
         }
 
         // Skip corpse decay time
-        RemoveCorpse(overrideRespawnTime, false);
+        RemoveCorpse(!overrideRespawnTime, false);
 
         SetCorpseDelay(corpseDelay);
         SetRespawnDelay(respawnDelay);
@@ -1955,15 +1955,14 @@ void Creature::ForcedDespawn(uint32 timeMSToDespawn, Seconds const& forceRespawn
     else
     {
         if (forceRespawnTimer > Seconds::zero())
-        {
-            m_respawnTime = time(NULL) + m_respawnDelay;
             SaveRespawnTime(forceRespawnTimer.count());
-        }
         else
         {
             uint32 respawnDelay = m_respawnDelay;
+            if (uint32 scalingMode = sWorld->getIntConfig(CONFIG_RESPAWN_DYNAMICMODE))
+                GetMap()->ApplyDynamicModeRespawnScaling(this, m_spawnId, respawnDelay, scalingMode);
             m_respawnTime = time(NULL) + respawnDelay;
-            SaveRespawnTime(0, false);
+            SaveRespawnTime();
         }
 
         AddObjectToRemoveList();
@@ -2326,7 +2325,7 @@ void Creature::SaveRespawnTime(uint32 forceDelay, bool savetodb)
     }
 
     uint32 thisRespawnTime = forceDelay ? time(NULL) + forceDelay : m_respawnTime;
-    GetMap()->SaveRespawnTime(SPAWN_TYPE_CREATURE, m_spawnId, GetEntry(), thisRespawnTime, GetMap()->GetZoneId(GetHomePosition().GetPositionX(), GetHomePosition().GetPositionY(), GetHomePosition().GetPositionZ()), Trinity::ComputeGridCoord(GetHomePosition().GetPositionX(), GetHomePosition().GetPositionY()).GetId(), m_creatureData->dbData ? savetodb : false);
+    GetMap()->SaveRespawnTime(SPAWN_TYPE_CREATURE, m_spawnId, GetEntry(), thisRespawnTime, GetMap()->GetZoneId(GetHomePosition()), Trinity::ComputeGridCoord(GetHomePosition().GetPositionX(), GetHomePosition().GetPositionY()).GetId(), m_creatureData->dbData && savetodb);
 }
 
 // this should not be called by petAI or

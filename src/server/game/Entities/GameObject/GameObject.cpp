@@ -506,8 +506,8 @@ void GameObject::Update(uint32 diff)
                         if (linkedRespawntime)             // Can't respawn, the master is dead
                         {
                             ObjectGuid targetGuid = sObjectMgr->GetLinkedRespawnGuid(dbtableHighGuid);
-                            if (targetGuid == dbtableHighGuid) // if linking self, never respawn (check delayed to next day)
-                                SetRespawnTime(DAY);
+                            if (targetGuid == dbtableHighGuid) // if linking self, never respawn
+                                SetRespawnTime(WEEK);
                             else
                                 m_respawnTime = (now > linkedRespawntime ? now : linkedRespawntime) + urand(5, MINUTE); // else copy time from master and add a little
                             SaveRespawnTime(); // also save to DB immediately
@@ -773,7 +773,10 @@ void GameObject::Update(uint32 diff)
                 return;
             }
 
-            m_respawnTime = time(nullptr) + m_respawnDelayTime;
+            uint32 respawnDelay = m_respawnDelayTime;
+            if (uint32 scalingMode = sWorld->getIntConfig(CONFIG_RESPAWN_DYNAMICMODE))
+                GetMap()->ApplyDynamicModeRespawnScaling(this, this->m_spawnId, respawnDelay, scalingMode);
+            m_respawnTime = time(nullptr) + respawnDelay;
 
             // if option not set then object will be saved at grid unload
             // Otherwise just save respawn time to map object memory
@@ -1084,10 +1087,6 @@ Unit* GameObject::GetOwner() const
 
 void GameObject::SaveRespawnTime(uint32 forceDelay, bool savetodb)
 {
-    bool haveGoData = false;
-    if (m_goData)
-        haveGoData = true;
-
     if (m_goData && m_respawnTime > time(nullptr) && m_spawnedByDefault)
     {
         if (m_respawnCompatibilityMode)
