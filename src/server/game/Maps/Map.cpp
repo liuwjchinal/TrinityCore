@@ -4162,7 +4162,6 @@ void Map::SaveRespawnTime(SpawnObjectType type, ObjectGuid::LowType spawnId, uin
         return;
     }
 
-    time_t now = time(NULL);
     RespawnInfo ri;
     ri.type = type;
     ri.spawnId = spawnId;
