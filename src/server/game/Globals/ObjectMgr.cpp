@@ -1967,7 +1967,7 @@ ObjectGuid::LowType ObjectMgr::AddGameObjectData(uint32 entry, uint32 mapId, Pos
     if (!map->Instanceable() && map->IsGridLoaded(data.GetPositionX(), data.GetPositionY()))
     {
         GameObject* go = new GameObject;
-        if (!go->LoadFromDB(guid, map))
+        if (!go->LoadFromDB(guid, map, true))
         {
             TC_LOG_ERROR("misc", "AddGameObjectData: cannot add gameobject entry %u to map", entry);
             delete go;
@@ -2021,7 +2021,7 @@ ObjectGuid::LowType ObjectMgr::AddCreatureData(uint32 entry, uint32 mapId, Posit
     if (!map->Instanceable() && !map->IsRemovalGrid(data.GetPositionX(), data.GetPositionY()))
     {
         Creature* creature = new Creature();
-        if (!creature->LoadFromDB(guid, map))
+        if (!creature->LoadFromDB(guid, map, true, true))
         {
             TC_LOG_ERROR("misc", "AddCreature: Cannot add creature entry %u to map", entry);
             delete creature;

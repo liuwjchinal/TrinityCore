@@ -152,7 +152,7 @@ void LoadHelper(CellGuidSet const& guid_set, CellCoord &cell, GridRefManager<T> 
                     continue;
             }
 
-            if (!obj->LoadFromDB(guid, map, false))
+            if (!obj->LoadFromDB(guid, map, false, false))
             {
                 delete obj;
                 continue;

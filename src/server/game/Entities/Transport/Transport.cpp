@@ -302,7 +302,7 @@ Creature* Transport::CreateNPCPassenger(ObjectGuid::LowType guid, CreatureData c
     Map* map = GetMap();
     Creature* creature = new Creature();
 
-    if (!creature->LoadFromDB(guid, map, false))
+    if (!creature->LoadFromDB(guid, map, false, true))
     {
         delete creature;
         return nullptr;

@@ -176,7 +176,7 @@ public:
 
         object = new GameObject();
         // this will generate a new guid if the object is in an instance
-        if (!object->LoadFromDB(guidLow, map))
+        if (!object->LoadFromDB(guidLow, map, true))
         {
             delete object;
             return false;
@@ -437,7 +437,7 @@ public:
         object->Delete();
 
         object = new GameObject();
-        if (!object->LoadFromDB(guidLow, map))
+        if (!object->LoadFromDB(guidLow, map, true))
         {
             delete object;
             return false;
@@ -506,7 +506,7 @@ public:
         object->Delete();
 
         object = new GameObject();
-        if (!object->LoadFromDB(guidLow, map))
+        if (!object->LoadFromDB(guidLow, map, true))
         {
             delete object;
             return false;

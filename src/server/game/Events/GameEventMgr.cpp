@@ -1209,7 +1209,7 @@ void GameEventMgr::GameEventSpawn(int16 event_id)
             {
                 Creature* creature = new Creature();
                 //TC_LOG_DEBUG("misc", "Spawning creature %u", *itr);
-                if (!creature->LoadFromDB(*itr, map))
+                if (!creature->LoadFromDB(*itr, map, true, false))
                     delete creature;
             }
         }

@@ -3050,14 +3050,14 @@ void Map::Respawn(RespawnInfo* info, bool force, SQLTransaction dbTrans)
             case SPAWN_TYPE_CREATURE:
             {
                 Creature* obj = new Creature();
-                if (!obj->LoadFromDB(spawnId, this))
+                if (!obj->LoadFromDB(spawnId, this, true, true))
                     delete obj;
                 break;
             }
             case SPAWN_TYPE_GAMEOBJECT:
             {
                 GameObject* obj = new GameObject();
-                if (!obj->LoadFromDB(spawnId, this))
+                if (!obj->LoadFromDB(spawnId, this, true))
                     delete obj;
             }
             default:
