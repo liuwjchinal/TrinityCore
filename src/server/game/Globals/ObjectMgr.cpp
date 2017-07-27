@@ -2244,7 +2244,7 @@ void ObjectMgr::LoadSpawnGroupTemplates()
     }
 
     if (result)
-        TC_LOG_INFO("server.loading", ">> Loaded " SZFMTD " spawn group templates in %u ms", _spawnGroupDataStore.size(), GetMSTimeDiffToNow(oldMSTime));
+        TC_LOG_INFO("server.loading", ">> Loaded %zu spawn group templates in %u ms", _spawnGroupDataStore.size(), GetMSTimeDiffToNow(oldMSTime));
     else
         TC_LOG_ERROR("server.loading", ">> Loaded 0 spawn group templates. DB table `spawn_group_template` is empty.");
 
@@ -2307,7 +2307,7 @@ void ObjectMgr::LoadSpawnGroups()
         }
     } while (result->NextRow());
 
-    TC_LOG_INFO("server.loading", ">> Loaded %u spawn group members in %u ms", _spawnGroupMapStore.size(), GetMSTimeDiffToNow(oldMSTime));
+    TC_LOG_INFO("server.loading", ">> Loaded %zu spawn group members in %u ms", _spawnGroupMapStore.size(), GetMSTimeDiffToNow(oldMSTime));
 }
 
 
