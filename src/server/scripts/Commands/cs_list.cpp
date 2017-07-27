@@ -679,20 +679,17 @@ public:
         {
             for (RespawnInfo* ri : respawns)
             {
-                if (range)
-                {
-                    CreatureData const* data = sObjectMgr->GetCreatureData(ri->spawnId);
-                    if (!data)
-                        continue;
-                    if (!player->IsInDist(data, range))
-                        continue;
-                }
+                CreatureData const* data = sObjectMgr->GetCreatureData(ri->spawnId);
+                if (!data)
+                    continue;
+                if (range && !player->IsInDist(data, range))
+                    continue;
                 uint32 gridY = ri->gridId / MAX_NUMBER_OF_GRIDS;
                 uint32 gridX = ri->gridId % MAX_NUMBER_OF_GRIDS;
 
                 std::string respawnTimeFull = secsToTimeString(ri->spawnDelay, true);
                 std::string respawnTime = ri->respawnTime > time(NULL) ? secsToTimeString(uint64(ri->respawnTime - time(NULL)), true) : stringOverdue;
-                handler->PSendSysMessage("%u | %u | [%02u,%02u] | %s (%u) | %s (%s)", ri->spawnId, ri->entry, gridX, gridY, GetZoneName(ri->zoneId, handler->GetSessionDbcLocale()), ri->zoneId, respawnTime.c_str(), respawnTimeFull.c_str());
+                handler->PSendSysMessage("%u | %u | [%02u,%02u] | %s (%u) | %s (%s)", ri->spawnId, ri->entry, gridX, gridY, GetZoneName(ri->zoneId, handler->GetSessionDbcLocale()), ri->zoneId, !data->spawnGroupData || data->spawnGroupData->isActive ? respawnTime.c_str() : "inactive", respawnTimeFull.c_str());
             }
         }
 
@@ -706,20 +703,17 @@ public:
         {
             for (RespawnInfo* ri : respawns)
             {
-                if (range)
-                {
-                    GameObjectData const* data = sObjectMgr->GetGameObjectData(ri->spawnId);
-                    if (!data)
-                        continue;
-                    if (!player->IsInDist(data, range))
-                        continue;
-                }
+                GameObjectData const* data = sObjectMgr->GetGameObjectData(ri->spawnId);
+                if (!data)
+                    continue;
+                if (range && !player->IsInDist(data, range))
+                    continue;
                 uint32 gridY = ri->gridId / MAX_NUMBER_OF_GRIDS;
                 uint32 gridX = ri->gridId % MAX_NUMBER_OF_GRIDS;
 
                 std::string respawnTimeFull = secsToTimeString(ri->spawnDelay, true);
                 std::string respawnTime = ri->respawnTime > time(NULL) ? secsToTimeString(uint64(ri->respawnTime - time(NULL)), true) : stringOverdue;
-                handler->PSendSysMessage("%u | %u | [% 02u, % 02u] | %s (%u) | %s(%s)", ri->spawnId, ri->entry, gridX, gridY, GetZoneName(ri->zoneId, handler->GetSessionDbcLocale()), ri->zoneId, respawnTime.c_str(), respawnTimeFull.c_str());
+                handler->PSendSysMessage("%u | %u | [% 02u, % 02u] | %s (%u) | %s(%s)", ri->spawnId, ri->entry, gridX, gridY, GetZoneName(ri->zoneId, handler->GetSessionDbcLocale()), ri->zoneId, !data->spawnGroupData || data->spawnGroupData->isActive ? respawnTime.c_str() : "inactive", respawnTimeFull.c_str());
             }
         }
         return true;

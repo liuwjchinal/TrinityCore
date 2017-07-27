@@ -899,7 +899,8 @@ void GameObject::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
     // update in loaded data (changing data only in this place)
     GameObjectData& data = sObjectMgr->NewOrExistGameObjectData(m_spawnId);
 
-    // data.spawnId = guid must not be updated at save
+    if (!data.spawnId)
+        data.spawnId = m_spawnId;
     ASSERT(data.spawnId == m_spawnId);
     data.id = GetEntry();
     data.WorldRelocate(this);

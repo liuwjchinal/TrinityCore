@@ -591,12 +591,10 @@ enum SMART_ACTION
     SMART_ACTION_PLAY_ANIMKIT                       = 128,    // don't use on 3.3.5a
     SMART_ACTION_SCENE_PLAY                         = 129,    // don't use on 3.3.5a
     SMART_ACTION_SCENE_CANCEL                       = 130,    // don't use on 3.3.5a
-    SMART_ACTION_SPAWN_CREATUREGROUP                = 131,    // Group ID, min secs, max secs
-    SMART_ACTION_DESPAWN_CREATUREGROUP              = 132,    // Group ID, min secs, max secs
-    SMART_ACTION_SPAWN_GAMEOBJECTGROUP              = 133,    // Group ID, min secs, max secs
-    SMART_ACTION_DESPAWN_GAMEOBJECTGROUP            = 134,    // Group ID, min secs, max secs
+    SMART_ACTION_SPAWN_SPAWNGROUP                   = 131,    // Group ID, min secs, max secs, spawnflags
+    SMART_ACTION_DESPAWN_SPAWNGROUP                 = 132,    // Group ID, min secs, max secs, spawnflags
 
-    SMART_ACTION_END                                = 135
+    SMART_ACTION_END                                = 133
 };
 
 struct SmartAction

@@ -203,15 +203,15 @@ SET `content_default` = '%d - %s X:%f Y:%f Z:%f MapId:%d %s %s'
 WHERE `entry` = 1110;
 
 -- Add new trinity strings for extra npc/gobject info lines
-DELETE FROM `trinity_string` WHERE `entry` BETWEEN 5070 AND 5083;
+DELETE FROM `trinity_string` WHERE `entry` BETWEEN 5070 AND 5082;
 INSERT INTO `trinity_string` (`entry`, `content_default`) VALUES
 (5070, 'Spawn group: %s (ID: %u, Flags: %u, Active: %u)'),
 (5071, 'Compatibility Mode: %u'),
 (5072, 'GUID: %s'),
 (5073, 'SpawnID: %u, location (%f, %f, %f)'),
 (5074, 'Distance from player %f'),
-(5075, 'Creature group %u not found'),
-(5076, 'GameObject group %u not found'),
+(5075, 'Spawn group %u not found'),
+(5076, 'Spawned a total of %zu objects:'),
 (5077, 'Listing %s respawns within %uyd'),
 (5078, 'Listing %s respawns for %s (zone %u)'),
 (5079, 'SpawnID | Entry | GridXY| Zone | Respawn time (Full)'),

@@ -38,6 +38,11 @@ EndScriptData */
 #include "RBAC.h"
 #include "WorldSession.h"
 
+struct npc_commandscript // partial declaration so we can map the spawn group command to both .npc and .gobject
+{                        // definitions are in cs_npc.cpp
+    static bool HandleNpcSpawnGroup(ChatHandler* handler, char const* args);
+    static bool HandleNpcDespawnGroup(ChatHandler* handler, char const* args);
+};
 class gobject_commandscript : public CommandScript
 {
 public:
@@ -64,8 +69,8 @@ public:
             { "near",         rbac::RBAC_PERM_COMMAND_GOBJECT_NEAR,         false, &HandleGameObjectNearCommand,      ""       },
             { "target",       rbac::RBAC_PERM_COMMAND_GOBJECT_TARGET,       false, &HandleGameObjectTargetCommand,    ""       },
             { "turn",         rbac::RBAC_PERM_COMMAND_GOBJECT_TURN,         false, &HandleGameObjectTurnCommand,      ""       },
-            { "spawngroup",   rbac::RBAC_PERM_COMMAND_GOBJECT_SPAWNGROUP,   false, &HandleGameObjectSpawnGroup,       ""       },
-            { "despawngroup", rbac::RBAC_PERM_COMMAND_GOBJECT_DESPAWNGROUP, false, &HandleGameObjectDespawnGroup,     ""       },
+            { "spawngroup",   rbac::RBAC_PERM_COMMAND_GOBJECT_SPAWNGROUP,   false, &npc_commandscript::HandleNpcSpawnGroup, "" },
+            { "despawngroup", rbac::RBAC_PERM_COMMAND_GOBJECT_DESPAWNGROUP, false, &npc_commandscript::HandleNpcDespawnGroup,""},
             { "add",          rbac::RBAC_PERM_COMMAND_GOBJECT_ADD,          false, nullptr,         "", gobjectAddCommandTable },
             { "set",          rbac::RBAC_PERM_COMMAND_GOBJECT_SET,          false, nullptr,         "", gobjectSetCommandTable },
         };
@@ -439,85 +444,6 @@ public:
         }
 
         handler->PSendSysMessage(LANG_COMMAND_TURNOBJMESSAGE, object->GetSpawnId(), object->GetGOInfo()->name.c_str(), object->GetSpawnId());
-        return true;
-    }
-
-    static bool HandleGameObjectSpawnGroup(ChatHandler* handler, char const* args)
-    {
-        if (!*args)
-            return false;
-
-        bool ignoreRespawn = false;
-        bool force = false;
-        uint32 groupId = 0;
-
-        // Decode arguments
-        char* arg = strtok((char*)args, " ");
-        while (arg)
-        {
-            std::string thisArg = arg;
-            std::transform(thisArg.begin(), thisArg.end(), thisArg.begin(), ::tolower);
-            if (thisArg == "ignorerespawn")
-                ignoreRespawn = true;
-            else if (thisArg == "force")
-                force = true;
-            else if (thisArg.empty() || !(std::count_if(thisArg.begin(), thisArg.end(), ::isdigit) == (int)thisArg.size()))
-                return false;
-            else
-                groupId = atoi(thisArg.c_str());
-
-            arg = strtok(NULL, " ");
-        }
-
-        Player* player = handler->GetSession()->GetPlayer();
-
-        std::vector <WorldObject*> gameobjectList;
-        if (!sObjectMgr->SpawnGroupSpawn(groupId, player->GetMap(), ignoreRespawn, force, &gameobjectList))
-        {
-            handler->PSendSysMessage(LANG_GOSPAWNGROUP_BADGROUP, groupId);
-            handler->SetSentErrorMessage(true);
-            return false;
-        }
-
-        for (WorldObject* obj : gameobjectList)
-            handler->PSendSysMessage("%s", obj->GetGUID().ToString().c_str());
-
-        return true;
-    }
-
-    static bool HandleGameObjectDespawnGroup(ChatHandler* handler, char const* args)
-    {
-        if (!*args)
-            return false;
-
-        bool deleteRespawnTimes = false;
-        uint32 groupId = 0;
-
-        // Decode arguments
-        char* arg = strtok((char*)args, " ");
-        while (arg)
-        {
-            std::string thisArg = arg;
-            std::transform(thisArg.begin(), thisArg.end(), thisArg.begin(), ::tolower);
-            if (thisArg == "removerespawntime")
-                deleteRespawnTimes = true;
-            else if (thisArg.empty() || !(std::count_if(thisArg.begin(), thisArg.end(), ::isdigit) == (int)thisArg.size()))
-                return false;
-            else
-                groupId = atoi(thisArg.c_str());
-
-            arg = strtok(NULL, " ");
-        }
-
-        Player* player = handler->GetSession()->GetPlayer();
-
-        if (!sObjectMgr->SpawnGroupDespawn(groupId, player->GetMap(), deleteRespawnTimes))
-        {
-            handler->PSendSysMessage(LANG_GOSPAWNGROUP_BADGROUP, groupId);
-            handler->SetSentErrorMessage(true);
-            return false;
-        }
-
         return true;
     }
 

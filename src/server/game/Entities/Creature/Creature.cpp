@@ -1208,7 +1208,8 @@ void Creature::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
             dynamicflags = 0;
     }
 
-    // data.spawnId = guid must not be updated at save
+    if (!data.spawnId)
+        data.spawnId = m_spawnId;
     ASSERT(data.spawnId == m_spawnId);
     data.id = GetEntry();
     data.phaseMask = phaseMask;

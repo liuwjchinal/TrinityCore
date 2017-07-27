@@ -1574,13 +1574,14 @@ public:
         std::vector <WorldObject*> creatureList;
         if (!sObjectMgr->SpawnGroupSpawn(groupId, player->GetMap(), ignoreRespawn, force, &creatureList))
         {
-            handler->PSendSysMessage(LANG_NPCSPAWNGROUP_BADGROUP, groupId);
+            handler->PSendSysMessage(LANG_SPAWNGROUP_BADGROUP, groupId);
             handler->SetSentErrorMessage(true);
             return false;
         }
 
+        handler->PSendSysMessage(LANG_SPAWNGROUP_SPAWNCOUNT, creatureList.size());
         for (WorldObject* obj : creatureList)
-            handler->PSendSysMessage("%s", obj->GetGUID().ToString().c_str());
+            handler->PSendSysMessage("%s (%s)", obj->GetName(), obj->GetGUID().ToString().c_str());
 
         return true;
     }
@@ -1613,7 +1614,7 @@ public:
 
         if (!sObjectMgr->SpawnGroupDespawn(groupId, player->GetMap(), deleteRespawnTimes))
         {
-            handler->PSendSysMessage(LANG_NPCSPAWNGROUP_BADGROUP, groupId);
+            handler->PSendSysMessage(LANG_SPAWNGROUP_BADGROUP, groupId);
             handler->SetSentErrorMessage(true);
             return false;
         }
